@@ -1,0 +1,8 @@
+X - Criar chão
+X - Movimentação da Câmera
+- Colisão
+- Arma
+- Iluminação
+- Cena
+- Texturas
+- Alvos E Tiros

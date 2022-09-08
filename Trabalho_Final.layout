@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<FileVersion major="1" minor="0" />
+	<ActiveTarget name="Debug (CBlocks 17.12 32-bit)" />
+	<File name="include\tiny_obj_loader.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="120" />
+		</Cursor>
+	</File>
+	<File name="include\matrices.h" open="0" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="69" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\glad.c" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4158" topLine="167" />
+		</Cursor>
+	</File>
+	<File name="include\utils.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="55" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="include\GLFW\glfw3.h" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="0" topLine="87" />
+		</Cursor>
+	</File>
+	<File name="src\shader_vertex.glsl" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="2" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2809" topLine="30" />
+		</Cursor>
+	</File>
+	<File name="src\shader_fragment.glsl" open="1" top="1" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="4347" topLine="78" />
+		</Cursor>
+	</File>
+	<File name="src\textrendering.cpp" open="0" top="0" tabpos="0" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="2352" topLine="0" />
+		</Cursor>
+	</File>
+	<File name="src\main.cpp" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="2" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="19895" topLine="410" />
+		</Cursor>
+		<Folding>
+			<Collapse line="53" />
+			<Collapse line="486" />
+			<Collapse line="539" />
+			<Collapse line="573" />
+			<Collapse line="622" />
+			<Collapse line="628" />
+			<Collapse line="643" />
+			<Collapse line="705" />
+			<Collapse line="851" />
+			<Collapse line="865" />
+			<Collapse line="880" />
+			<Collapse line="950" />
+			<Collapse line="1002" />
+			<Collapse line="1026" />
+			<Collapse line="1080" />
+			<Collapse line="1148" />
+			<Collapse line="1166" />
+			<Collapse line="1244" />
+			<Collapse line="1248" />
+			<Collapse line="1267" />
+			<Collapse line="1274" />
+			<Collapse line="1328" />
+			<Collapse line="1342" />
+			<Collapse line="1358" />
+			<Collapse line="1395" />
+		</Folding>
+	</File>
+</CodeBlocks_layout_file>
