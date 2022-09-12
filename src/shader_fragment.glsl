@@ -29,6 +29,11 @@ uniform int object_id;
 uniform vec4 bbox_min;
 uniform vec4 bbox_max;
 
+// Posição da Fonte de Luz
+uniform vec4 light_pos;
+// Direção da Fonte de Luz
+uniform vec4 light_dir;
+
 // Variáveis para acesso das imagens de textura
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
@@ -61,7 +66,10 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(1.0,1.0,0.0,0.0));
+    vec4 l = normalize(light_pos - p);
+
+    float angle = dot(-l, light_dir);
+    float angFech = 30.0f;
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
@@ -127,7 +135,7 @@ void main()
         //V = texcoords.y;
 
         // Propriedades espectrais do plano
-        Kd = vec3(0.2,0.2,0.2);
+        Kd = vec3(0.05,0.05,0.05);
         Ks = vec3(0.3,0.3,0.3);
         Ka = vec3(0.2,0.2,0.2);
         q = 10.0;
@@ -148,10 +156,10 @@ void main()
     }
 
     // Espectro da fonte de iluminação
-    vec3 I = vec3(1.0,1.0,1.0);
+    vec3 I = vec3(1.0,1.0,0.8);
 
     // Espectro da luz ambiente
-    vec3 Ia = vec3(0.2,0.2,0.2);
+    vec3 Ia = vec3(0.01,0.01,0.01);
 
     // Equação de Iluminação
     float lambert_diffuse_term = max(0,dot(n,l));
@@ -168,8 +176,6 @@ void main()
     // Cor do Pixel da Textura
     vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
 
-    color.rgb = (Kd*I*Kd0*(lambert_diffuse_term + 0.01)) + (texture(TextureImage1, vec2(U,V)).rgb * ml) + ambient_term + phong_specular_term;
-
     // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
     // necessário:
     // 1) Habilitar a operação de "blending" de OpenGL logo antes de realizar o
@@ -183,6 +189,10 @@ void main()
     //    transparentes que estão mais longe da câmera).
     // Alpha default = 1 = 100% opaco = 0% transparente
     color.a = 1;
+
+    if(acos(angle) < radians(angFech))
+        color.rgb = (Kd*I*Kd0*(lambert_diffuse_term + 0.01)) + (texture(TextureImage1, vec2(U,V)).rgb * ml) + ambient_term + phong_specular_term;
+    else color.rgb = 0.01*(ambient_term + (Kd*Kd0));
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
