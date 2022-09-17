@@ -74,6 +74,8 @@ void main()
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
 
+    vec4 h = normalize(v+l);
+
     // Vetor que define o sentido da reflexão especular ideal.
     vec4 r = -l + 2*n*(dot(n,l));
 
@@ -103,9 +105,9 @@ void main()
 
         // Propriedades espectrais da esfera
         Kd = vec3(0.8,0.4,0.08);
-        Ks = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.2,0.2,0.2);
         Ka = vec3(0.4,0.2,0.04);
-        q = 1.0;
+        q = 20.0;
     }
     else if ( object_id == BUNNY )
     {
@@ -147,7 +149,7 @@ void main()
         Ka = vec3(0.1,0.1,0.1);
         q = 10.0;
     }
-    else // Objeto desconhecido = preto
+    else // Objeto desconhecido
     {
         Kd = vec3(0.4,0.4,0.4);
         Ks = vec3(0.03,0.03,0.03);
@@ -168,7 +170,7 @@ void main()
     vec3 ambient_term = Ka*Ia;
 
     // Termo especular utilizando o modelo de iluminação de Phong
-    vec3 phong_specular_term  = Ks*I*pow(max(0,dot(r,v)), q);
+    vec3 blinn_phong_specular_term  = Ks*I*pow(max(0,dot(n,h)), q);
 
     // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
     float ml = pow((1 - lambert_diffuse_term),20);
@@ -191,8 +193,9 @@ void main()
     color.a = 1;
 
     if(acos(angle) < radians(angFech))
-        color.rgb = (Kd*I*Kd0*(lambert_diffuse_term + 0.01)) + (texture(TextureImage1, vec2(U,V)).rgb * ml) + ambient_term + phong_specular_term;
-    else color.rgb = 0.01*(ambient_term + (Kd*Kd0));
+        color.rgb = (Kd*I*Kd0*(lambert_diffuse_term + 0.01)) + (texture(TextureImage1, vec2(U,V)).rgb * ml) + ambient_term + blinn_phong_specular_term;
+    else color.rgb = texture(TextureImage1, vec2(U,V)).rgb;
+    // 0.01f * (ambient_term + (Kd*Kd0) + texture(TextureImage1, vec2(U,V)).rgb);
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas

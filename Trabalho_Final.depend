@@ -966,7 +966,7 @@
 	<inttypes.h>
 	<stdint.h>
 
-1663025040 source:d:\users\bnero\documents\github\trabalho-final-fcg\src\main.cpp
+1663457579 source:d:\users\bnero\documents\github\trabalho-final-fcg\src\main.cpp
 	<cmath>
 	<cstdio>
 	<cstdlib>
@@ -1857,9 +1857,10 @@
 1661356587 d:\users\bnero\documents\github\trabalho-final-fcg\include\utils.h
 	<cstdio>
 
-1661356587 d:\users\bnero\documents\github\trabalho-final-fcg\include\matrices.h
+1663377819 d:\users\bnero\documents\github\trabalho-final-fcg\include\matrices.h
 	<cstdio>
 	<cstdlib>
+	<iostream>
 	<glm/mat4x4.hpp>
 	<glm/vec4.hpp>
 	<glm/gtc/matrix_transform.hpp>
@@ -1867,7 +1868,7 @@
 1661356587 source:d:\users\bnero\documents\github\trabalho-final-fcg\src\stb_image.cpp
 	"stb_image.h"
 
-1661356587 source:d:\users\bnero\documents\github\trabalho-final-fcg\src\textrendering.cpp
+1663453366 source:d:\users\bnero\documents\github\trabalho-final-fcg\src\textrendering.cpp
 	<string>
 	<glad/glad.h>
 	<GLFW/glfw3.h>
@@ -1882,4 +1883,19 @@
 
 1661356587 source:d:\users\bnero\documents\github\trabalho-final-fcg\src\tiny_obj_loader.cpp
 	"tiny_obj_loader.h"
+
+1663105706 d:\users\bnero\documents\github\trabalho-final-fcg\include\collisions.h
+	<cmath>
+	<cstdio>
+	<cstdlib>
+	<string>
+	<vector>
+	<fstream>
+	<sstream>
+	<iostream>
+	<glm/mat4x4.hpp>
+	<glm/vec4.hpp>
+	<glm/gtc/type_ptr.hpp>
+
+1663105850 source:d:\users\bnero\documents\github\trabalho-final-fcg\src\collisions.cpp
 

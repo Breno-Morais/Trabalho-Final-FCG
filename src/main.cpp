@@ -104,6 +104,7 @@ void TextRendering_PrintVector(GLFWwindow* window, glm::vec4 v, float x, float y
 void TextRendering_PrintMatrixVectorProduct(GLFWwindow* window, glm::mat4 M, glm::vec4 v, float x, float y, float scale = 1.0f);
 void TextRendering_PrintMatrixVectorProductMoreDigits(GLFWwindow* window, glm::mat4 M, glm::vec4 v, float x, float y, float scale = 1.0f);
 void TextRendering_PrintMatrixVectorProductDivW(GLFWwindow* window, glm::mat4 M, glm::vec4 v, float x, float y, float scale = 1.0f);
+void TextRendering_ShowCrossHair(GLFWwindow* window);
 
 // Funções abaixo renderizam como texto na janela OpenGL algumas matrizes e
 // outras informações do programa. Definidas após main().
@@ -161,7 +162,6 @@ bool g_RightMouseButtonPressed = false; // Análogo para botão direito do mouse
 bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mouse
 
 glm::vec4 camera_position_c = glm::vec4(0.0f,0.0f,3.0f,1.0f);
-glm::vec4 camera_angles = glm::vec4(0.0f,90.0f,0.0f,0.0f);
 glm::vec4 camera_view_vector;
 glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
 
@@ -187,7 +187,7 @@ float g_TorsoPositionY = 0.0f;
 bool g_UsePerspectiveProjection = true;
 
 // Variável que controla se o texto informativo será mostrado na tela.
-bool g_ShowInfoText = true;
+bool g_ShowInfoText = false;
 
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
 GLuint vertex_shader_id;
@@ -302,6 +302,14 @@ int main(int argc, char* argv[])
     ComputeNormals(&chestmodel);
     BuildTrianglesAndAddToVirtualScene(&chestmodel);
 
+    ObjModel cubemodel("../../data/cube.obj");
+    ComputeNormals(&cubemodel);
+    BuildTrianglesAndAddToVirtualScene(&cubemodel);
+
+    ObjModel revolvermodel("../../data/revolver.obj");
+    ComputeNormals(&revolvermodel);
+    BuildTrianglesAndAddToVirtualScene(&revolvermodel);
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -318,6 +326,11 @@ int main(int argc, char* argv[])
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
+
+    Raio ray;
+    Esfera sphe;
+    Cubo boxB = {vert_min: glm::vec4(1.8f, 3.1f, 0.0f, 1.0f), vert_max: glm::vec4(2.19f, 3.7f, 0.0f, 1.0f)};
+
 
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
@@ -404,6 +417,9 @@ int main(int argc, char* argv[])
         #define BUNNY  1
         #define PLANE  2
         #define CHEST  3
+        #define CUBE  4
+        #define GUN 5
+
 
         // Passa a posição da fonte de luz
         glm::vec4 LightPos = camera_position_c + camera_view_vector;
@@ -413,7 +429,7 @@ int main(int argc, char* argv[])
         glUniform4f(light_dir_uniform, camera_view_vector.x, camera_view_vector.y, camera_view_vector.z, 0.0f);
 
         // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,0.0f)
+        model = Matrix_Translate(sphe.centro.x,sphe.centro.y,sphe.centro.z)
               * Matrix_Rotate_Z(0.6f)
               * Matrix_Rotate_X(0.2f)
               * Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.1f);
@@ -421,12 +437,15 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, SPHERE);
         DrawVirtualObject("sphere");
 
+        /*
+
         // Desenhamos o modelo do coelho
         model = Matrix_Translate(1.0f,0.0f,0.0f)
               * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, BUNNY);
         DrawVirtualObject("bunny");
+        */
 
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,-1.1f,0.0f) * Matrix_Scale(100.0f, 1.0f, 100.0f);
@@ -434,14 +453,40 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
 
-        // Desenhamos um baú do chão
         /*
+        // Desenhamos um baú do chão
         model = Matrix_Translate(0.0f,-0.5f,0.0f)*Matrix_Scale(2.0f, 2.0f,2.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, CHEST);
         DrawVirtualObject("chest");
+
+
+        model = Matrix_Identity();
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, CUBE);
+        DrawVirtualObject("cube");
         */
 
+        //Cubo boxA = {vert_min: glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f), vert_max: glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
+
+        sphe.centro = glm::vec4(1.0f,0.0f,0.0f, 1.0f);
+        sphe.r = (int)norm(g_VirtualScene["bunny"].bbox_min);
+        ray.dir = camera_view_vector;
+        ray.origem = camera_position_c;
+
+        float t = collision_Ray_Sphere(ray, sphe);
+        if(t >= 0)
+        {
+            glm::vec4 point = ray.origem + t*ray.dir;
+            model = Matrix_Translate(point.x,point.y,point.z)*
+                    Matrix_Scale(0.2f,0.2f,0.2f)*
+                    Matrix_Rotate_Z(0.6f)*
+                    Matrix_Rotate_X(0.2f)*
+                    Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.1f);
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, SPHERE);
+            DrawVirtualObject("sphere");
+        }
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -453,6 +498,9 @@ int main(int argc, char* argv[])
         // Imprimimos na tela informação sobre o número de quadros renderizados
         // por segundo (frames per second).
         TextRendering_ShowFramesPerSecond(window);
+
+        // Imprimi a crosshair, a mira.
+        TextRendering_ShowCrossHair(window);
 
         // O framebuffer onde OpenGL executa as operações de renderização não
         // é o mesmo que está sendo mostrado para o usuário, caso contrário
@@ -1252,6 +1300,18 @@ void TextRendering_ShowProjection(GLFWwindow* window)
         TextRendering_PrintString(window, "Perspective", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
     else
         TextRendering_PrintString(window, "Orthographic", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
+}
+
+void TextRendering_ShowCrossHair(GLFWwindow* window)
+{
+    float lineheight = TextRendering_LineHeight(window);
+    float charwidth = TextRendering_CharWidth(window);
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    float heighthalf = height/2.0f;
+    float widthhalf = width/2.0f;
+
+    TextRendering_PrintString(window, "+", 0.0f-(charwidth/2.0f), 0.0f-(lineheight/2), 1.0f);
 }
 
 // Escrevemos na tela o número de quadros renderizados por segundo (frames per

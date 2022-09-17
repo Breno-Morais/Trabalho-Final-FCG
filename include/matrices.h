@@ -3,10 +3,30 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+struct Raio
+{
+    glm::vec4 origem;
+    glm::vec4 dir;
+};
+
+struct Esfera
+{
+    glm::vec4 centro;
+    int r;
+};
+
+struct Cubo
+{
+    glm::vec4 vert_min;
+    glm::vec4 vert_max;
+};
+
 
 // Esta função Matrix() auxilia na criação de matrizes usando a biblioteca GLM.
 // Note que em OpenGL (e GLM) as matrizes são definidas como "column-major",
@@ -147,7 +167,7 @@ glm::mat4 Matrix_Rotate_Z(float angle)
 
 // Função que calcula a norma Euclidiana de um vetor cujos coeficientes são
 // definidos em uma base ortonormal qualquer.
-float norm(glm::vec4 v)
+float norm(auto v)
 {
     float vx = v.x;
     float vy = v.y;
@@ -364,6 +384,75 @@ void PrintMatrixVectorProductDivW(glm::mat4 M, glm::vec4 v)
     printf("[ %+0.2f  %+0.2f  %+0.2f  %+0.2f ][ %+0.2f ]   [ %+0.2f ]            [ %+0.2f ]\n", M[0][3], M[1][3], M[2][3], M[3][3], v[3], r[3], r[3]/w);
 }
 
+float collision_Ray_Sphere(Raio ray, Esfera sphere)
+{
+    float a, b, c, x1, x2, delta;
+    a = pow(norm(ray.dir),2);
+    b = dotproduct(2.0f*ray.dir, (ray.origem - sphere.centro));
+    c = pow(norm(ray.origem - sphere.centro),2) - pow(sphere.r, 2);
+    delta = b*b - 4*a*c;
+
+    if (delta > 0) {
+        x1 = (-b + sqrt(delta)) / (2*a);
+        x2 = (-b - sqrt(delta)) / (2*a);
+        if(x1 < 0 || x2 < 0) return -1.0f;
+        return std::min(x1,x2);
+    }
+
+    else if (delta == 0) {
+        x1 = -b/(2*a);
+        return x1;
+    }
+
+    return -1.0f;
+}
+
+bool collision_Box_Box(Cubo box1, Cubo box2)
+{
+    bool x_overlap = (box1.vert_min.x <= box2.vert_max.x) && (box1.vert_max.x >= box2.vert_min.x);
+    bool y_overlap = (box1.vert_min.y <= box2.vert_max.y) && (box1.vert_max.y >= box2.vert_min.y);
+    bool z_overlap = (box1.vert_min.z <= box2.vert_max.z) && (box1.vert_max.z >= box2.vert_min.z);
+
+    return x_overlap && y_overlap && z_overlap;
+}
+
+bool collision_Ray_Box(Raio ray, Cubo box)
+{
+    float tmin = (box.vert_min.x - ray.origem.x) / ray.dir.x;
+    float tmax = (box.vert_max.x - ray.origem.x) / ray.dir.x;
+
+    if (tmin > tmax) std::swap(tmin, tmax);
+
+    float tymin = (box.vert_min.y - ray.origem.y) / ray.dir.y;
+    float tymax = (box.vert_max.y - ray.origem.y) / ray.dir.y;
+
+    if (tymin > tymax) std::swap(tymin, tymax);
+
+    if ((tmin > tymax) || (tymin > tmax))
+        return false;
+
+    if (tymin > tmin)
+        tmin = tymin;
+
+    if (tymax < tmax)
+        tmax = tymax;
+
+    float tzmin = (box.vert_min.z - ray.origem.z) / ray.dir.z;
+    float tzmax = (box.vert_max.z - ray.origem.z) / ray.dir.z;
+
+    if (tzmin > tzmax) std::swap(tzmin, tzmax);
+
+    if ((tmin > tzmax) || (tzmin > tmax))
+        return false;
+
+    if (tzmin > tmin)
+        tmin = tzmin;
+
+    if (tzmax < tmax)
+        tmax = tzmax;
+
+    return true;
+}
 
 #endif // _MATRICES_H
 // vim: set spell spelllang=pt_br :

@@ -31,7 +31,7 @@ const GLchar* const textfragmentshader_source = ""
 "out vec4 fragColor;\n"
 "void main()\n"
 "{\n"
-    "fragColor = vec4(0, 0, 0, texture(tex, texCoords).r);\n"
+    "fragColor = vec4(1, 1, 1, texture(tex, texCoords).r);\n"
 "}\n"
 "\0";
 
@@ -142,7 +142,7 @@ void TextRendering_Init()
     glCheckError();
 }
 
-float textscale = 1.5f;
+float textscale = 5.0f;
 
 void TextRendering_PrintString(GLFWwindow* window, const std::string &str, float x, float y, float scale = 1.0f)
 {
