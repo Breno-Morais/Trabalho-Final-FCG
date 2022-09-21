@@ -192,7 +192,10 @@ bool g_ShowInfoText = false;
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
 GLuint vertex_shader_id;
 GLuint fragment_shader_id;
+GLuint vertex_shader_shadow_id;
+GLuint fragment_shader_shadow_id;
 GLuint program_id = 0;
+GLuint program_shadow_id = 0;
 GLint model_uniform;
 GLint view_uniform;
 GLint projection_uniform;
@@ -204,6 +207,8 @@ GLint light_dir_uniform;
 
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
+
+glm::vec3 cubic_bezier(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, float t);
 
 int main(int argc, char* argv[])
 {
@@ -329,7 +334,7 @@ int main(int argc, char* argv[])
 
     Raio ray;
     Esfera sphe;
-    Cubo boxB = {vert_min: glm::vec4(1.8f, 3.1f, 0.0f, 1.0f), vert_max: glm::vec4(2.19f, 3.7f, 0.0f, 1.0f)};
+    //Cubo boxB = {vert_min: glm::vec4(1.8f, 3.1f, 0.0f, 1.0f), vert_max: glm::vec4(2.19f, 3.7f, 0.0f, 1.0f)};
 
 
     // Ficamos em loop, renderizando, até que o usuário feche a janela
@@ -382,7 +387,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -100.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -429,6 +434,16 @@ int main(int argc, char* argv[])
         glUniform4f(light_dir_uniform, camera_view_vector.x, camera_view_vector.y, camera_view_vector.z, 0.0f);
 
         // Desenhamos o modelo da esfera
+        //float t = 1 / (1 + exp(-1*((float)glfwGetTime()-5))); // Função Sigmoid
+        // Ponto da Curva de Bezier
+
+        glm::vec3 pos1{x: 1.0f,y: 0.0f,z: 1.0f};
+        glm::vec3 pos2{x: 1.0f,y: 2.0f,z: 1.0f};
+        glm::vec3 pos3{x: -1.0f,y: -1.0f,z: -1.0f};
+        glm::vec3 pos4{x: -5.0f,y: 1.0f,z: -1.0f};
+        glm::vec3 newPos = cubic_bezier(pos1, pos2, pos3, pos4, t);
+        sphe.centro = glm::vec4(sphe.centro.x + newPos.x, sphe.centro.y + newPos.y, sphe.centro.z + newPos.z, 1.0f);
+
         model = Matrix_Translate(sphe.centro.x,sphe.centro.y,sphe.centro.z)
               * Matrix_Rotate_Z(0.6f)
               * Matrix_Rotate_X(0.2f)
@@ -438,7 +453,6 @@ int main(int argc, char* argv[])
         DrawVirtualObject("sphere");
 
         /*
-
         // Desenhamos o modelo do coelho
         model = Matrix_Translate(1.0f,0.0f,0.0f)
               * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f);
@@ -474,7 +488,7 @@ int main(int argc, char* argv[])
         ray.dir = camera_view_vector;
         ray.origem = camera_position_c;
 
-        float t = collision_Ray_Sphere(ray, sphe);
+        t = collision_Ray_Sphere(ray, sphe);
         if(t >= 0)
         {
             glm::vec4 point = ray.origem + t*ray.dir;
@@ -522,6 +536,11 @@ int main(int argc, char* argv[])
 
     // Fim do programa
     return 0;
+}
+
+glm::vec3 cubic_bezier(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, float t)
+{
+    return (float)(pow((1-t),3)) * p1 + (float)(3*t*pow((1-t),2)) * p2 + (float)(3*t*t*(1-t)) * p3 + (float)(t*t*t)*p4;
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
@@ -635,12 +654,16 @@ void LoadShadersFromFiles()
     vertex_shader_id = LoadShader_Vertex("../../src/shader_vertex.glsl");
     fragment_shader_id = LoadShader_Fragment("../../src/shader_fragment.glsl");
 
+    vertex_shader_shadow_id = LoadShader_Vertex("../../src/shader_vertex_shadow_map.glsl");
+    fragment_shader_shadow_id = LoadShader_Fragment("../../src/shader_fragment_shadow_map.glsl");
+
     // Deletamos o programa de GPU anterior, caso ele exista.
     if ( program_id != 0 )
         glDeleteProgram(program_id);
 
     // Criamos um programa de GPU utilizando os shaders carregados acima.
     program_id = CreateGpuProgram(vertex_shader_id, fragment_shader_id);
+    program_shadow_id = CreateGpuProgram(vertex_shader_shadow_id, fragment_shader_shadow_id);
 
     // Buscamos o endereço das variáveis definidas dentro do Vertex Shader.
     // Utilizaremos estas variáveis para enviar dados para a placa de vídeo
@@ -1308,8 +1331,6 @@ void TextRendering_ShowCrossHair(GLFWwindow* window)
     float charwidth = TextRendering_CharWidth(window);
     int width, height;
     glfwGetWindowSize(window, &width, &height);
-    float heighthalf = height/2.0f;
-    float widthhalf = width/2.0f;
 
     TextRendering_PrintString(window, "+", 0.0f-(charwidth/2.0f), 0.0f-(lineheight/2), 1.0f);
 }
