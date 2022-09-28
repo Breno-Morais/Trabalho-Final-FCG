@@ -40,6 +40,10 @@ struct Cubo_Collision
     bool colide;
     float scale;
     std::string objName;
+    bool visto;
+    float tempoVisto;
+    float t;
+    glm::vec3 Path[4];
 };
 
 struct Sphere_Collision

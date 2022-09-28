@@ -16,6 +16,7 @@
 //    #include <cstdio> // Em C++
 //
 #include <cmath>
+#include <math.h>
 #include <cstdio>
 #include <cstdlib>
 
@@ -214,6 +215,9 @@ std::unordered_map<std::string, std::vector<Cubo_Collision>> Cubes_Collisions;
 std::unordered_map<std::string, std::vector<Sphere_Collision>> Spheres_Collisions;
 Raio ray;
 
+static double d2r(double d);
+# define M_PI           3.14159265358979323846
+
 int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
@@ -409,7 +413,7 @@ int main(int argc, char* argv[])
 
     centro = (bbox_max + bbox_min)/2.0f;
 
-    pos = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    pos = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
     scale = 0.002f;
     {
         Cubo_Collision temp = {
@@ -419,13 +423,21 @@ int main(int argc, char* argv[])
             }, // Cube
             false, // bool colide
             scale, // Escala usada para matriz de modelo
-            Obj_Name // Nome do objeto na cena virtual
+            Obj_Name, // Nome do objeto na cena virtual
+            false, // Se o objeto está sendo observado
+            0.0f, // Tempo sendo visto
+            0.0f, // t usado pela curva de bezier
+            {
+                glm::vec3(pos.x, pos.y, pos.z),
+                glm::vec3(pos.x, pos.y + 5.0f, pos.z),
+                glm::vec3(-pos.x, pos.y + 5.0f, -pos.z),
+                glm::vec3(-pos.x, pos.y, -pos.z)
+            } // Pontos do caminho de fuga
         };
         Cubes_Collisions[Obj_Name].push_back(temp);
     }
 
     pos = glm::vec4(2.0f, 1.0f, 3.0f, 1.0f);
-
     scale = 0.005f;
     {
         Cubo_Collision temp = {
@@ -434,8 +446,17 @@ int main(int argc, char* argv[])
                 pos + ((bbox_max - centro)*scale)
             }, // Cube
             false, // bool colide
-            scale,
-            Obj_Name
+            scale, // Escala usada para matriz de modelo
+            Obj_Name, // Nome do objeto na cena virtual
+            false, // Se o objeto está sendo observado
+            0.0f, // Tempo sendo visto
+            0.0f, // t usado pela curva de bezier
+            {
+                glm::vec3(pos.x, pos.y, pos.z),
+                glm::vec3(pos.x, pos.y + 5.0f, pos.z),
+                glm::vec3(-pos.x, pos.y + 5.0f, -pos.z),
+                glm::vec3(-pos.x, pos.y, -pos.z)
+            } // Pontos do caminho de fuga
         };
         Cubes_Collisions[Obj_Name].push_back(temp);
     }
@@ -502,18 +523,11 @@ int main(int argc, char* argv[])
 
         if (g_UsePerspectiveProjection)
         {
-            // Projeção Perspectiva.
-            // Para definição do field of view (FOV), veja slides 205-215 do documento Aula_09_Projecoes.pdf.
             float field_of_view = 3.141592 / 3.0f;
             projection = Matrix_Perspective(field_of_view, g_ScreenRatio, nearplane, farplane);
         }
         else
         {
-            // Projeção Ortográfica.
-            // Para definição dos valores l, r, b, t ("left", "right", "bottom", "top"),
-            // PARA PROJEÇÃO ORTOGRÁFICA veja slides 219-224 do documento Aula_09_Projecoes.pdf.
-            // Para simular um "zoom" ortográfico, computamos o valor de "t"
-            // utilizando a variável g_CameraDistance.
             float t = 1.5f*g_CameraDistance/2.5f;
             float b = -t;
             float r = t*g_ScreenRatio;
@@ -545,18 +559,7 @@ int main(int argc, char* argv[])
         glUniform4f(light_dir_uniform, camera_view_vector.x, camera_view_vector.y, camera_view_vector.z, 0.0f);
 
         // Desenhamos o modelo da esfera
-        float t = 1 / (1 + exp(-1*((float)glfwGetTime()-10))); // Função Sigmoid
-        // Ponto da Curva de Bezier
-
         /*
-        glm::vec3 pos1{x: 1.0f,y: 0.0f,z: 1.0f};
-        glm::vec3 pos2{x: 1.0f,y: 2.0f,z: 1.0f};
-        glm::vec3 pos3{x: -1.0f,y: -1.0f,z: -1.0f};
-        glm::vec3 pos4{x: -5.0f,y: 1.0f,z: -1.0f};
-        glm::vec3 newPos = cubic_bezier(pos1, pos2, pos3, pos4, t);
-        Esfera *sphe = &(Spheres_Collisions["sphere"].bola);
-        //sphe->centro = glm::vec4(newPos.x, newPos.y, newPos.z, 1.0f);
-
         model = Matrix_Translate(sphe->centro.x,sphe->centro.y,sphe->centro.z)
               * Matrix_Rotate_Z(0.6f)
               * Matrix_Rotate_X(0.2f)
@@ -581,8 +584,31 @@ int main(int argc, char* argv[])
         Obj_Name = "statue";
         for(unsigned int i = 0; i < Cubes_Collisions[Obj_Name].size(); i++)
         {
-            float model_scale = Cubes_Collisions[Obj_Name][i].scale;
-            centro = (Cubes_Collisions[Obj_Name][i].cube.centro());
+            Cubo_Collision* modelo = &(Cubes_Collisions[Obj_Name][i]);
+            float model_scale = modelo->scale;
+            centro = (modelo->cube.centro());
+
+            glm::vec4 l = (LightPos - centro)/norm(LightPos - centro);
+            float angle = dotproduct(-l, camera_view_vector);
+            if(modelo->visto)
+            {
+                modelo->tempoVisto += deltaTime;
+
+                glm::vec3 newPos = cubic_bezier(modelo->Path[0], modelo->Path[1], modelo->Path[2], modelo->Path[3], modelo->t);
+                centro = glm::vec4(newPos.x, newPos.y, newPos.z, 1.0f);
+
+                modelo->t = 1 / (1 + exp(-2*(modelo->tempoVisto-5))); // Função Sigmoid
+
+            } else if(acos(angle) < d2r(25))
+            {
+                modelo->tempoVisto += deltaTime;
+                if(modelo->tempoVisto >= 2 && !modelo->visto)
+                {
+                    modelo->visto = true;
+                    modelo->tempoVisto = 0;
+                }
+            } else modelo->tempoVisto = 0;
+
 
             model = Matrix_Translate(centro.x, centro.y, centro.z)
                   * Matrix_Scale(model_scale, model_scale, model_scale);
@@ -1682,3 +1708,6 @@ void PrintObjModelInfo(ObjModel* model)
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
 // vim: set spell spelllang=pt_br :
 
+static double d2r(double d) {
+  return (d / 180.0) * ((double) M_PI);
+}
