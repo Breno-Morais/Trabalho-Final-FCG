@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
+#include <string>
 
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
@@ -21,12 +22,33 @@ struct Esfera
     int r;
 };
 
-struct Cubo
+class Cubo
 {
+public:
     glm::vec4 vert_min;
     glm::vec4 vert_max;
+
+    glm::vec4 centro()
+    {
+        return (vert_min + vert_max)/2.0f;
+    }
 };
 
+struct Cubo_Collision
+{
+    Cubo cube;
+    bool colide;
+    float scale;
+    std::string objName;
+};
+
+struct Sphere_Collision
+{
+    Esfera bola;
+    bool colide;
+    float scale;
+    std::string objName;
+};
 
 // Esta função Matrix() auxilia na criação de matrizes usando a biblioteca GLM.
 // Note que em OpenGL (e GLM) as matrizes são definidas como "column-major",
@@ -167,7 +189,8 @@ glm::mat4 Matrix_Rotate_Z(float angle)
 
 // Função que calcula a norma Euclidiana de um vetor cujos coeficientes são
 // definidos em uma base ortonormal qualquer.
-float norm(auto v)
+template <typename T>
+float norm(T v)
 {
     float vx = v.x;
     float vy = v.y;
@@ -452,6 +475,25 @@ bool collision_Ray_Box(Raio ray, Cubo box)
         tmax = tzmax;
 
     return true;
+}
+
+bool collision(Raio ray, Esfera sphere)
+{
+    float t = collision_Ray_Sphere(ray,sphere);
+    if(t < 0)
+        return false;
+    else
+        return true;
+}
+
+bool collision(Cubo box1, Cubo box2)
+{
+    return collision_Box_Box(box1,box2);
+}
+
+bool collision(Raio ray, Cubo box)
+{
+    return collision_Ray_Box(ray, box);
 }
 
 #endif // _MATRICES_H

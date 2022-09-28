@@ -21,6 +21,7 @@
 
 // Headers abaixo são específicos de C++
 #include <map>
+#include <unordered_map>
 #include <stack>
 #include <string>
 #include <vector>
@@ -161,7 +162,7 @@ bool g_LeftMouseButtonPressed = false;
 bool g_RightMouseButtonPressed = false; // Análogo para botão direito do mouse
 bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mouse
 
-glm::vec4 camera_position_c = glm::vec4(0.0f,0.0f,3.0f,1.0f);
+glm::vec4 camera_position_c = glm::vec4(0.0f,0.0f,0.0f,1.0f);
 glm::vec4 camera_view_vector;
 glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
 
@@ -209,6 +210,9 @@ GLint light_dir_uniform;
 GLuint g_NumLoadedTextures = 0;
 
 glm::vec3 cubic_bezier(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, float t);
+std::unordered_map<std::string, std::vector<Cubo_Collision>> Cubes_Collisions;
+std::unordered_map<std::string, std::vector<Sphere_Collision>> Spheres_Collisions;
+Raio ray;
 
 int main(int argc, char* argv[])
 {
@@ -290,26 +294,153 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
+    glm::vec4 pos, centro, bbox_min, bbox_max;
+    std::string Obj_Name;
+    float scale = 1.0f;
+
+//-------------------------------------------------------------------
 
     ObjModel spheremodel("../../data/sphere.obj");
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
+    {
+        Sphere_Collision temp = {
+            {
+                glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+                (int)norm(g_VirtualScene["sphere"].bbox_min)
+            }, // Esfera
+            false, // bool colide
+            scale,
+            "sphere"
+        };
+        Spheres_Collisions["sphere"].push_back(temp);
+    }
+
+//-------------------------------------------------------------------
 
     ObjModel bunnymodel("../../data/bunny.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
+    {
+        Cubo_Collision temp = {
+            {
+                glm::vec4(g_VirtualScene["bunny"].bbox_min.x,g_VirtualScene["bunny"].bbox_min.y,g_VirtualScene["bunny"].bbox_min.z, 1.0f),
+                glm::vec4(g_VirtualScene["bunny"].bbox_max.x,g_VirtualScene["bunny"].bbox_max.y,g_VirtualScene["bunny"].bbox_max.z, 1.0f)
+            }, // Cube
+            false, // bool colide
+            scale,
+            "bunny"
+        };
+        Cubes_Collisions["bunny"].push_back(temp);
+    }
+
+//-------------------------------------------------------------------
 
     ObjModel planemodel("../../data/plane.obj");
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
 
+//-------------------------------------------------------------------
+
     ObjModel chestmodel("../../data/chest.obj");
     ComputeNormals(&chestmodel);
     BuildTrianglesAndAddToVirtualScene(&chestmodel);
+    {
+        Cubo_Collision temp = {
+            {
+                glm::vec4(g_VirtualScene["chest"].bbox_min.x,g_VirtualScene["chest"].bbox_min.y,g_VirtualScene["chest"].bbox_min.z, 1.0f),
+                glm::vec4(g_VirtualScene["chest"].bbox_max.x,g_VirtualScene["chest"].bbox_max.y,g_VirtualScene["chest"].bbox_max.z, 1.0f)
+            }, // Cube
+            false, // bool colide
+            scale,
+            "chest"
+        };
+        Cubes_Collisions["chest"].push_back(temp);
+    }
+
+//-------------------------------------------------------------------
 
     ObjModel cubemodel("../../data/cube.obj");
     ComputeNormals(&cubemodel);
     BuildTrianglesAndAddToVirtualScene(&cubemodel);
+    Obj_Name = "cube";
+    bbox_min = glm::vec4(g_VirtualScene[Obj_Name].bbox_min.x,
+                          g_VirtualScene[Obj_Name].bbox_min.y,
+                          g_VirtualScene[Obj_Name].bbox_min.z,
+                          1.0f);
+    bbox_max = glm::vec4(g_VirtualScene[Obj_Name].bbox_max.x,
+                          g_VirtualScene[Obj_Name].bbox_max.y,
+                          g_VirtualScene[Obj_Name].bbox_max.z,
+                          1.0f);
+    centro = (bbox_max + bbox_min)/2.0f;
+
+    pos = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    scale = 1.0f;
+    /*
+    {
+        Cubo_Collision temp = {
+            {
+                pos + ((bbox_min - centro)*scale),
+                pos + ((bbox_max - centro)*scale)
+            }, // Cube
+            false, // bool colide
+            scale,
+            Obj_Name
+        };
+        Cubes_Collisions[Obj_Name].push_back(temp);
+    }
+    */
+
+//-------------------------------------------------------------------
+
+    ObjModel statuemodel("../../data/statue.obj");
+    ComputeNormals(&statuemodel);
+    BuildTrianglesAndAddToVirtualScene(&statuemodel);
+    Obj_Name = "statue";
+
+    bbox_min = glm::vec4(g_VirtualScene[Obj_Name].bbox_min.x,
+                          g_VirtualScene[Obj_Name].bbox_min.y,
+                          g_VirtualScene[Obj_Name].bbox_min.z,
+                          1.0f);
+    bbox_max = glm::vec4(g_VirtualScene[Obj_Name].bbox_max.x,
+                          g_VirtualScene[Obj_Name].bbox_max.y,
+                          g_VirtualScene[Obj_Name].bbox_max.z,
+                          1.0f);
+
+    centro = (bbox_max + bbox_min)/2.0f;
+
+    pos = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    scale = 0.002f;
+    {
+        Cubo_Collision temp = {
+            {
+                pos + ((bbox_min - centro)*scale),
+                pos + ((bbox_max - centro)*scale)
+            }, // Cube
+            false, // bool colide
+            scale, // Escala usada para matriz de modelo
+            Obj_Name // Nome do objeto na cena virtual
+        };
+        Cubes_Collisions[Obj_Name].push_back(temp);
+    }
+
+    pos = glm::vec4(2.0f, 1.0f, 3.0f, 1.0f);
+
+    scale = 0.005f;
+    {
+        Cubo_Collision temp = {
+            {
+                pos + ((bbox_min - centro)*scale),
+                pos + ((bbox_max - centro)*scale)
+            }, // Cube
+            false, // bool colide
+            scale,
+            Obj_Name
+        };
+        Cubes_Collisions[Obj_Name].push_back(temp);
+    }
+
+//-------------------------------------------------------------------
 
     ObjModel revolvermodel("../../data/revolver.obj");
     ComputeNormals(&revolvermodel);
@@ -332,38 +463,18 @@ int main(int argc, char* argv[])
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
-    Raio ray;
-    Esfera sphe;
     //Cubo boxB = {vert_min: glm::vec4(1.8f, 3.1f, 0.0f, 1.0f), vert_max: glm::vec4(2.19f, 3.7f, 0.0f, 1.0f)};
-
 
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
+        ray.dir = camera_view_vector;
+        ray.origem = camera_position_c;
         InputperFrame(window);
 
-        // Aqui executamos as operações de renderização
-
-        // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
-        // definida como coeficientes RGBA: Red, Green, Blue, Alpha; isto é:
-        // Vermelho, Verde, Azul, Alpha (valor de transparência).
-        // Conversaremos sobre sistemas de cores nas aulas de Modelos de Iluminação.
-        //
-        //           R     G     B     A
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-        // "Pintamos" todos os pixels do framebuffer com a cor definida acima,
-        // e também resetamos todos os pixels do Z-buffer (depth buffer).
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // Pedimos para a GPU utilizar o programa de GPU criado acima (contendo
-        // os shaders de vértice e fragmentos).
         glUseProgram(program_id);
-
-        // Computamos a posição da câmera utilizando coordenadas esféricas.  As
-        // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
-        // controladas pelo mouse do usuário. Veja as funções CursorPosCallback()
-        // e ScrollCallback().
 
         glm::vec4 direction;
         direction.x = cos(g_CameraPhi)*cos(g_CameraTheta);
@@ -386,8 +497,8 @@ int main(int argc, char* argv[])
 
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
-        float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -100.0f; // Posição do "far plane"
+        float nearplane = -0.001f;  // Posição do "near plane"
+        float farplane  = -500.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -424,7 +535,7 @@ int main(int argc, char* argv[])
         #define CHEST  3
         #define CUBE  4
         #define GUN 5
-
+        #define STATUEI 6
 
         // Passa a posição da fonte de luz
         glm::vec4 LightPos = camera_position_c + camera_view_vector;
@@ -434,25 +545,29 @@ int main(int argc, char* argv[])
         glUniform4f(light_dir_uniform, camera_view_vector.x, camera_view_vector.y, camera_view_vector.z, 0.0f);
 
         // Desenhamos o modelo da esfera
-        //float t = 1 / (1 + exp(-1*((float)glfwGetTime()-5))); // Função Sigmoid
+        float t = 1 / (1 + exp(-1*((float)glfwGetTime()-10))); // Função Sigmoid
         // Ponto da Curva de Bezier
 
+        /*
         glm::vec3 pos1{x: 1.0f,y: 0.0f,z: 1.0f};
         glm::vec3 pos2{x: 1.0f,y: 2.0f,z: 1.0f};
         glm::vec3 pos3{x: -1.0f,y: -1.0f,z: -1.0f};
         glm::vec3 pos4{x: -5.0f,y: 1.0f,z: -1.0f};
         glm::vec3 newPos = cubic_bezier(pos1, pos2, pos3, pos4, t);
-        sphe.centro = glm::vec4(sphe.centro.x + newPos.x, sphe.centro.y + newPos.y, sphe.centro.z + newPos.z, 1.0f);
+        Esfera *sphe = &(Spheres_Collisions["sphere"].bola);
+        //sphe->centro = glm::vec4(newPos.x, newPos.y, newPos.z, 1.0f);
 
-        model = Matrix_Translate(sphe.centro.x,sphe.centro.y,sphe.centro.z)
+        model = Matrix_Translate(sphe->centro.x,sphe->centro.y,sphe->centro.z)
               * Matrix_Rotate_Z(0.6f)
               * Matrix_Rotate_X(0.2f)
               * Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.1f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, SPHERE);
-        DrawVirtualObject("sphere");
+        if(!(Spheres_Collisions["sphere"].colide))
+        {
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, SPHERE);
+            DrawVirtualObject("sphere");
+        }
 
-        /*
         // Desenhamos o modelo do coelho
         model = Matrix_Translate(1.0f,0.0f,0.0f)
               * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f);
@@ -461,6 +576,25 @@ int main(int argc, char* argv[])
         DrawVirtualObject("bunny");
         */
 
+
+        // Desenhamos os modelos das estatuas
+        Obj_Name = "statue";
+        for(unsigned int i = 0; i < Cubes_Collisions[Obj_Name].size(); i++)
+        {
+            float model_scale = Cubes_Collisions[Obj_Name][i].scale;
+            centro = (Cubes_Collisions[Obj_Name][i].cube.centro());
+
+            model = Matrix_Translate(centro.x, centro.y, centro.z)
+                  * Matrix_Scale(model_scale, model_scale, model_scale);
+
+            if(!(Cubes_Collisions[Obj_Name][i].colide))
+            {
+                glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(object_id_uniform, STATUEI);
+                DrawVirtualObject(Obj_Name.c_str());
+            }
+        }
+
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,-1.1f,0.0f) * Matrix_Scale(100.0f, 1.0f, 100.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -468,38 +602,32 @@ int main(int argc, char* argv[])
         DrawVirtualObject("plane");
 
         /*
+        model = Matrix_Translate(0.0f,0.0f,5.0f) * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, GUN);
+        DrawVirtualObject("revolver");
+
         // Desenhamos um baú do chão
         model = Matrix_Translate(0.0f,-0.5f,0.0f)*Matrix_Scale(2.0f, 2.0f,2.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, CHEST);
         DrawVirtualObject("chest");
-
-
-        model = Matrix_Identity();
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, CUBE);
-        DrawVirtualObject("cube");
         */
 
-        //Cubo boxA = {vert_min: glm::vec4(-1.0f, -1.0f, -1.0f, 1.0f), vert_max: glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
 
-        sphe.centro = glm::vec4(1.0f,0.0f,0.0f, 1.0f);
-        sphe.r = (int)norm(g_VirtualScene["bunny"].bbox_min);
-        ray.dir = camera_view_vector;
-        ray.origem = camera_position_c;
-
-        t = collision_Ray_Sphere(ray, sphe);
-        if(t >= 0)
+        Obj_Name = "cube";
+        for(unsigned int i = 0; i < Cubes_Collisions[Obj_Name].size(); i++)
         {
-            glm::vec4 point = ray.origem + t*ray.dir;
-            model = Matrix_Translate(point.x,point.y,point.z)*
-                    Matrix_Scale(0.2f,0.2f,0.2f)*
-                    Matrix_Rotate_Z(0.6f)*
-                    Matrix_Rotate_X(0.2f)*
-                    Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.1f);
-            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(object_id_uniform, SPHERE);
-            DrawVirtualObject("sphere");
+            centro = Cubes_Collisions[Obj_Name][i].cube.centro();
+            float model_scale = Cubes_Collisions[Obj_Name][i].scale;
+            model = Matrix_Translate(centro.x, centro.y, centro.z)
+                  * Matrix_Scale(model_scale, model_scale, model_scale);
+            if(!(Cubes_Collisions[Obj_Name][i].colide))
+            {
+                glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(object_id_uniform, STATUEI);
+                DrawVirtualObject(Obj_Name.c_str());
+            }
         }
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
@@ -1087,6 +1215,17 @@ void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
 // Função callback chamada sempre que o usuário aperta algum dos botões do mouse
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        for(auto& c: Cubes_Collisions)
+            for(auto& v: c.second)
+                v.colide = (collision(ray, v.cube) || v.colide);
+
+        for(auto& s: Spheres_Collisions)
+            for(auto& v: s.second)
+                v.colide = (collision(ray, v.bola) || v.colide);
+
+    }
 }
 
 // Função callback chamada sempre que o usuário movimentar o cursor do mouse em

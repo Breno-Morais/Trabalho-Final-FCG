@@ -23,6 +23,9 @@ uniform mat4 projection;
 #define BUNNY  1
 #define PLANE  2
 #define CHEST  3
+#define CUBE  4
+#define GUN 5
+#define STATUEI 6
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -194,7 +197,7 @@ void main()
 
     if(acos(angle) < radians(angFech))
         color.rgb = (Kd*I*Kd0*(lambert_diffuse_term + 0.01)) + (texture(TextureImage1, vec2(U,V)).rgb * ml) + ambient_term + blinn_phong_specular_term;
-    else color.rgb = texture(TextureImage1, vec2(U,V)).rgb;
+    else color.rgb = ambient_term;
     // 0.01f * (ambient_term + (Kd*Kd0) + texture(TextureImage1, vec2(U,V)).rgb);
 
     // Cor final com correção gamma, considerando monitor sRGB.
