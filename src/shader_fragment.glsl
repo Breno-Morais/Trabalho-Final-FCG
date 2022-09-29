@@ -42,8 +42,10 @@ uniform vec4 light_dir;
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
-uniform sampler2D TextureImage3;
-uniform sampler2D TextureImage4;
+uniform vec3 MKa;
+uniform vec3 MKd;
+uniform vec3 MKs;
+uniform vec3 MKe;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -138,15 +140,11 @@ void main()
     }
     else if ( object_id == PLANE )
     {
-        // Coordenadas de textura do plano, obtidas do arquivo OBJ.
-        //U = texcoords.x;
-        //V = texcoords.y;
-
         // Propriedades espectrais do plano
-        Kd = vec3(0.05,0.05,0.05);
-        Ks = vec3(0.3,0.3,0.3);
+        Kd = vec3(0.015,0.02,0.00);
+        Ks = vec3(0.2,0.2,0.0);
         Ka = vec3(0.2,0.2,0.2);
-        q = 10.0;
+        q = 80.0;
     }
     else if ( object_id == CHEST)
     {
@@ -166,12 +164,18 @@ void main()
         Ka = vec3(0.1,0.1,0.1);
         q = 20.0;
     }
+    else if(object_id == 99)
+    {
+        Ka = (MKa * 0.1f) + vec3(0.01f, 0.01f, 0.0f);
+        Kd = (MKd * 0.1f) + vec3(0.01f, 0.01f, 0.0f);
+        Ks = (MKs * 0.1f) + vec3(0.01f, 0.01f, 0.0f);
+    }
     else // Objeto desconhecido
     {
         U = texcoords.x;
         V = texcoords.y;
 
-        Kd = vec3(0.4,0.4,0.4);
+        Kd = vec3(0.3,0.3,0.3);
         Ks = vec3(0.03,0.03,0.03);
         Ka = vec3(0.2,0.2,0.2);
         q = 20.0;
@@ -196,37 +200,25 @@ void main()
     float ml = pow((1 - lambert_diffuse_term),20);
 
     // Cor do Pixel da Textura
-    vec3 Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
-
-    // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
-    // necessário:
-    // 1) Habilitar a operação de "blending" de OpenGL logo antes de realizar o
-    //    desenho dos objetos transparentes, com os comandos abaixo no código C++:
-    //      glEnable(GL_BLEND);
-    //      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    // 2) Realizar o desenho de todos objetos transparentes *após* ter desenhado
-    //    todos os objetos opacos; e
-    // 3) Realizar o desenho de objetos transparentes ordenados de acordo com
-    //    suas distâncias para a câmera (desenhando primeiro objetos
-    //    transparentes que estão mais longe da câmera).
-    // Alpha default = 1 = 100% opaco = 0% transparente
     color.a = 1;
 
     if(object_id == GUN)
-        color.rgb = ambient_term + (Kd*I*Kd0*lambert_diffuse_term*0.01f) + blinn_phong_specular_term*0.01f;
+        color.rgb = ambient_term + (Kd*I*lambert_diffuse_term*0.01f) + blinn_phong_specular_term*0.01f;
     else if(acos(angle) < radians(angFech))
     {
         if(object_id == STATUEI)
-            color.rgb = texture(TextureImage2, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term;
+            color.rgb = texture(TextureImage0, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term;
         else if(object_id == STATUEG)
-            color.rgb = texture(TextureImage3, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term;
-        else color.rgb = Kd*I*Kd0*(lambert_diffuse_term + 0.01) + ambient_term + blinn_phong_specular_term;
+            color.rgb = texture(TextureImage1, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term;
+        else color.rgb = Kd*I*(lambert_diffuse_term + 0.01) + ambient_term + blinn_phong_specular_term;
     }
     else
     {
         if(object_id == STATUEI)
-            color.rgb = (texture(TextureImage2, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term)*0.01f;
-        else color.rgb = ambient_term + (Kd*I*Kd0*lambert_diffuse_term*0.01f);
+            color.rgb = (texture(TextureImage0, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term)*0.01f;
+        else if(object_id == STATUEG)
+            color.rgb = (texture(TextureImage1, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term)*0.01f;
+        else color.rgb = ambient_term + (Kd*I*lambert_diffuse_term*0.01f);
     }
     // 0.01f * (ambient_term + (Kd*Kd0) + texture(TextureImage1, vec2(U,V)).rgb);
 
