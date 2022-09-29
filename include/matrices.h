@@ -19,7 +19,7 @@ struct Raio
 struct Esfera
 {
     glm::vec4 centro;
-    int r;
+    float r;
 };
 
 class Cubo
@@ -31,6 +31,12 @@ public:
     glm::vec4 centro()
     {
         return (vert_min + vert_max)/2.0f;
+    }
+
+    void newCentro(glm::vec4 newPos)
+    {
+        vert_min = newPos + (vert_min - centro());
+        vert_max = newPos + (vert_max - centro());
     }
 };
 
@@ -52,6 +58,10 @@ struct Sphere_Collision
     bool colide;
     float scale;
     std::string objName;
+    bool visto;
+    float tempoVisto;
+    float t;
+    glm::vec3 Path[4];
 };
 
 // Esta função Matrix() auxilia na criação de matrizes usando a biblioteca GLM.

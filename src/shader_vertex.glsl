@@ -10,6 +10,7 @@ layout (location = 2) in vec2 texture_coefficients;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform int object_id;
 
 // Atributos de vértice que serão gerados como saída ("out") pelo Vertex Shader.
 // ** Estes serão interpolados pelo rasterizador! ** gerando, assim, valores
@@ -34,7 +35,10 @@ void main()
     // deste Vertex Shader, a placa de vídeo (GPU) fará a divisão por W. Veja
     // slides 41-67 e 69-86 do documento Aula_09_Projecoes.pdf.
 
-    gl_Position = projection * view * model * model_coefficients;
+    if(object_id == 5)
+        gl_Position = projection * model * model_coefficients;
+    else
+        gl_Position = projection * view * model * model_coefficients;
 
     // Como as variáveis acima  (tipo vec4) são vetores com 4 coeficientes,
     // também é possível acessar e modificar cada coeficiente de maneira

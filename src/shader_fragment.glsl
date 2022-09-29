@@ -26,6 +26,7 @@ uniform mat4 projection;
 #define CUBE  4
 #define GUN 5
 #define STATUEI 6
+#define STATUEG 7
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -41,6 +42,8 @@ uniform vec4 light_dir;
 uniform sampler2D TextureImage0;
 uniform sampler2D TextureImage1;
 uniform sampler2D TextureImage2;
+uniform sampler2D TextureImage3;
+uniform sampler2D TextureImage4;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -152,8 +155,22 @@ void main()
         Ka = vec3(0.1,0.1,0.1);
         q = 10.0;
     }
+    else if( object_id == STATUEI || object_id == STATUEG )
+    {
+        U = texcoords.x;
+        V = texcoords.y;
+
+        // Propriedades espectrais do coelho
+        Kd = vec3(0.1,0.1,0.1);
+        Ks = vec3(0.03,0.03,0.03);
+        Ka = vec3(0.1,0.1,0.1);
+        q = 20.0;
+    }
     else // Objeto desconhecido
     {
+        U = texcoords.x;
+        V = texcoords.y;
+
         Kd = vec3(0.4,0.4,0.4);
         Ks = vec3(0.03,0.03,0.03);
         Ka = vec3(0.2,0.2,0.2);
@@ -195,9 +212,22 @@ void main()
     // Alpha default = 1 = 100% opaco = 0% transparente
     color.a = 1;
 
-    if(acos(angle) < radians(angFech))
-        color.rgb = (Kd*I*Kd0*(lambert_diffuse_term + 0.01)) + (texture(TextureImage1, vec2(U,V)).rgb * ml) + ambient_term + blinn_phong_specular_term;
-    else color.rgb = ambient_term;
+    if(object_id == GUN)
+        color.rgb = ambient_term + (Kd*I*Kd0*lambert_diffuse_term*0.01f) + blinn_phong_specular_term*0.01f;
+    else if(acos(angle) < radians(angFech))
+    {
+        if(object_id == STATUEI)
+            color.rgb = texture(TextureImage2, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term;
+        else if(object_id == STATUEG)
+            color.rgb = texture(TextureImage3, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term;
+        else color.rgb = Kd*I*Kd0*(lambert_diffuse_term + 0.01) + ambient_term + blinn_phong_specular_term;
+    }
+    else
+    {
+        if(object_id == STATUEI)
+            color.rgb = (texture(TextureImage2, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term)*0.01f;
+        else color.rgb = ambient_term + (Kd*I*Kd0*lambert_diffuse_term*0.01f);
+    }
     // 0.01f * (ambient_term + (Kd*Kd0) + texture(TextureImage1, vec2(U,V)).rgb);
 
     // Cor final com correção gamma, considerando monitor sRGB.
