@@ -55,11 +55,9 @@ float collision_Ray_Sphere(Raio ray, Esfera sphere)
 
 bool collision_Box_Box(Cubo box1, Cubo box2)
 {
-    bool x_overlap = (box1.vert_min.x <= box2.vert_max.x) && (box1.vert_max.x >= box2.vert_min.x);
-    bool y_overlap = (box1.vert_min.y <= box2.vert_max.y) && (box1.vert_max.y >= box2.vert_min.y);
-    bool z_overlap = (box1.vert_min.z <= box2.vert_max.z) && (box1.vert_max.z >= box2.vert_min.z);
-
-    return x_overlap && y_overlap && z_overlap;
+    return   (box1.vert_min.x <= box2.vert_max.x && box1.vert_max.x >= box2.vert_min.x) &&
+             (box1.vert_min.y <= box2.vert_max.y && box1.vert_max.y >= box2.vert_min.y) &&
+             (box1.vert_min.z <= box2.vert_max.z && box1.vert_max.z >= box2.vert_min.z);
 }
 
 bool collision_Ray_Box(Raio ray, Cubo box)
@@ -98,23 +96,19 @@ bool collision_Ray_Box(Raio ray, Cubo box)
         tmax = tzmax;
 
     return true;
-}
+}  // FONTE http://www.realtimerendering.com/intersections.html
 
 bool collision_Box_Plane(Cubo box1, Plano p)
 {
-    // Convert AABB to center-extents representation
-    glm::vec4 c = box1.centro(); // Compute AABB center
-    glm::vec4 e = box1.vert_max - c; // Compute positive extents
+    glm::vec4 c = box1.centro();
+    glm::vec4 e = box1.vert_max - c;
 
-    // Compute the projection interval radius of b onto L(t) = b.c + t * p.n
     float r = e.x*abs(p.n.x) + e.y*abs(p.n.y) + e.z*abs(p.n.z);
 
-    // Compute distance of box center from plane
     float s = dotproductp(p.n, glm::vec4(c.x, c.y, c.z, 0.0f)) - p.d;
 
-    // Intersection occurs when distance s falls within [-r,+r] interval
     return abs(s) <= r;
-}
+} // FONTE http://www.realtimerendering.com/intersections.html
 
 bool collision(Raio ray, Esfera sphere)
 {

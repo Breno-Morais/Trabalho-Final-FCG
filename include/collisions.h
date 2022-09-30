@@ -66,12 +66,16 @@ struct Sphere_Collision
 {
     Esfera bola;
     bool colide;
-    float scale;
+    glm::mat4 Matrix_Model;
     std::string objName;
     bool visto;
     float tempoVisto;
     float t;
     glm::vec3 Path[4];
+    glm::vec3 Ka;
+    glm::vec3 Kd;
+    glm::vec3 Ks;
+    glm::vec3 Ke;
 };
 
 float collision_Ray_Sphere(Raio ray, Esfera sphere);

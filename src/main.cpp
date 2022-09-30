@@ -101,6 +101,7 @@ void PrintObjModelInfo(ObjModel*); // Função para debugging
 void TextRendering_Init();
 float TextRendering_LineHeight(GLFWwindow* window);
 float TextRendering_CharWidth(GLFWwindow* window);
+void TextRendering_Parabens(GLFWwindow* window);
 void TextRendering_PrintString(GLFWwindow* window, const std::string &str, float x, float y, float scale = 1.0f);
 void TextRendering_PrintMatrix(GLFWwindow* window, glm::mat4 M, float x, float y, float scale = 1.0f);
 void TextRendering_PrintVector(GLFWwindow* window, glm::vec4 v, float x, float y, float scale = 1.0f);
@@ -164,8 +165,8 @@ bool g_LeftMouseButtonPressed = false;
 bool g_RightMouseButtonPressed = false; // Análogo para botão direito do mouse
 bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mouse
 
-glm::vec4 camera_position_c = glm::vec4(0.0f,3.0f,0.0f,1.0f);
-glm::vec4 camera_view_vector = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+glm::vec4 camera_position_c = glm::vec4(-1.8f,3.0f,-2.45f,1.0f);
+glm::vec4 camera_view_vector = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
 
 glm::vec4 camera_pos_anim = glm::vec4(0.0f,1.0f,0.0f,1.0f);
@@ -175,8 +176,8 @@ glm::vec4 camera_view_anim = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 // usuário através do mouse (veja função CursorPosCallback()). A posição
 // efetiva da câmera é calculada dentro da função main(), dentro do loop de
 // renderização.
-float g_CameraTheta = -1.595001f; // Ângulo no plano ZX em relação ao eixo Z
-float g_CameraPhi = 0.0f;   // Ângulo em relação ao eixo Y
+float g_CameraTheta = -6.25f; // Ângulo no plano ZX em relação ao eixo Z
+float g_CameraPhi = 0.020796f;   // Ângulo em relação ao eixo Y
 float g_CameraDistance = 2.5f; // Distância da câmera para a origem
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
@@ -204,6 +205,7 @@ GLuint program_id = 0;
 GLuint program_shadow_id = 0;
 GLint model_uniform;
 GLint view_uniform;
+GLint lightSpaceMatrix_uniform;
 GLint projection_uniform;
 GLint object_id_uniform;
 GLint bbox_min_uniform;
@@ -224,6 +226,7 @@ std::unordered_map<std::string, std::vector<Sphere_Collision>> Spheres_Collision
 std::vector<Plano> Planes_Collisions;
 std::vector<std::string> ObjetosCenaNomes;
 Cubo Player_AABB {glm::vec4(-0.5f, -1.0f, -0.5f, 1.0f), glm::vec4(0.5f, 10.0f, 0.5f, 1.0f)};
+bool Tfinal = false;
 Raio ray;
 float anim_final = 0.0f;
 glm::mat4 anim_model;
@@ -260,7 +263,9 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - 335794 - Breno da Silva Morais", NULL, NULL);
+    int height = 750;
+    int width = 1300;
+    window = glfwCreateWindow(width, height, "INF01047 - 335794 - Breno da Silva Morais", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -291,7 +296,7 @@ int main(int argc, char* argv[])
     // redimensionada, por consequência alterando o tamanho do "framebuffer"
     // (região de memória onde são armazenados os pixels da imagem).
     glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
-    FramebufferSizeCallback(window, 800, 600); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
+    FramebufferSizeCallback(window, width, height); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
 
     // Imprimimos no terminal informações sobre a GPU do sistema
     const GLubyte *vendor      = glGetString(GL_VENDOR);
@@ -318,6 +323,47 @@ int main(int argc, char* argv[])
 
     Player_AABB.newCentro(camera_position_c);
 
+
+//-------------------------------------------------------------------
+
+    scale = 0.005f;
+    ObjModel spheremodel("../../data/snowglobe.obj","../../data/");
+    ComputeNormals(&spheremodel);
+    BuildTrianglesAndAddToVirtualScene(&spheremodel);
+
+    pos = glm::vec4(8.44f, 1.8f, 0.61f, 1.0f);
+    {
+        Sphere_Collision temp =
+        {
+            {
+                pos + glm::vec4(0.0f, 0.2f, 0.01f, 0.0f),
+                (norm(g_VirtualScene["sphere"].bbox_min)) * scale
+            }, // Esfera
+            false,
+            Matrix_Translate(pos.x, pos.y, pos.z)
+          * Matrix_Scale(scale, scale, scale),
+            "sphere",
+            false,
+            0.0f,
+            0.0f,
+            {
+                glm::vec3(pos.x, pos.y, pos.z),
+                glm::vec3(pos.x, pos.y + 5.0f, pos.z),
+                glm::vec3(-pos.x, pos.y + 5.0f, -pos.z),
+                glm::vec3(-pos.x, pos.y, -pos.z)
+            },
+            glm::vec3(spheremodel.materials[0].ambient[0],spheremodel.materials[0].ambient[1], spheremodel.materials[0].ambient[2]),
+            glm::vec3(spheremodel.materials[0].diffuse[0],spheremodel.materials[0].diffuse[1], spheremodel.materials[0].diffuse[2]),
+            glm::vec3(spheremodel.materials[0].specular[0],spheremodel.materials[0].specular[1], spheremodel.materials[0].specular[2]),
+            glm::vec3(spheremodel.materials[0].transmittance[0],spheremodel.materials[0].transmittance[1], spheremodel.materials[0].transmittance[2])
+        };
+        Spheres_Collisions["sphere"].push_back(temp);
+    }
+
+    ObjModel sphere1model("../../data/sphere.obj","../../data/");
+    ComputeNormals(&sphere1model);
+    BuildTrianglesAndAddToVirtualScene(&sphere1model);
+
 //-------------------------------------------------------------------
 
     ObjModel planemodel("../../data/plane.obj");
@@ -328,15 +374,7 @@ int main(int argc, char* argv[])
         Plano temp =
         {
             glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f),
-            20.0f
-        };
-
-        Planes_Collisions.push_back(temp);
-
-        temp =
-        {
-            glm::vec4(1.0f, 0.0f, 0.0f, 0.0f),
-            20.0f
+            25.0f
         };
 
         Planes_Collisions.push_back(temp);
@@ -344,14 +382,6 @@ int main(int argc, char* argv[])
         temp =
         {
             glm::vec4(0.0f, 0.0f, -1.0f, 0.0f),
-            20.0f
-        };
-
-        Planes_Collisions.push_back(temp);
-
-        temp =
-        {
-            glm::vec4(0.0f, 0.0f, 1.0f, 0.0f),
             20.0f
         };
 
@@ -455,33 +485,8 @@ int main(int argc, char* argv[])
     centro = (bbox_max + bbox_min)/2.0f;
 
     // GOLDEN
-    pos = glm::vec4(-1.0f, 1.0f, 1.0f, 1.0f);
-    scale = 0.002f;
-    {
-        Cubo_Collision temp = {
-            {
-                bbox_min,
-                bbox_max
-            }, // Cube
-            true, // bool colide
-            Matrix_Translate(pos.x, pos.y, pos.z)
-          * Matrix_Scale(scale, scale, scale), // Matrix do Modelo
-            Obj_Name, // Nome do objeto na cena virtual
-            false, // Se o objeto está sendo observado
-            0.0f, // Tempo sendo visto
-            0.0f, // t usado pela curva de bezier
-            {
-                glm::vec3(pos.x, pos.y, pos.z),
-                glm::vec3(pos.x, pos.y + 5.0f, pos.z),
-                glm::vec3(-pos.x, pos.y + 5.0f, -pos.z),
-                glm::vec3(-pos.x, pos.y, -pos.z)
-            } // Pontos do caminho de fuga
-        };
-        Cubes_Collisions[Obj_Name].push_back(temp);
-    }
-
-    pos = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    scale = 0.002f;
+    pos = glm::vec4(23.76f, 0.1f, 9.61f, 1.0f);
+    scale = 0.01f;
     {
         Cubo_Collision temp = {
             {
@@ -496,17 +501,17 @@ int main(int argc, char* argv[])
             0.0f, // Tempo sendo visto
             0.0f, // t usado pela curva de bezier
             {
-                glm::vec3(pos.x, pos.y, pos.z),
+                glm::vec3(pos.x, pos.y + 0.3f, pos.z),
                 glm::vec3(pos.x, pos.y + 5.0f, pos.z),
                 glm::vec3(-pos.x, pos.y + 5.0f, -pos.z),
-                glm::vec3(-pos.x, pos.y, -pos.z)
-            } // Pontos do caminho de fuga
+                glm::vec3(-6.64f, 0.1f, 24.5f)
+            }, // Pontos do caminho de fuga
         };
         Cubes_Collisions[Obj_Name].push_back(temp);
     }
 
-    pos = glm::vec4(2.0f, 1.0f, 3.0f, 1.0f);
-    scale = 0.005f;
+    pos = glm::vec4(-1.68f, 0.2f, -7.15f, 1.0f);
+    scale = 0.0045f;
     {
         Cubo_Collision temp = {
             {
@@ -521,10 +526,82 @@ int main(int argc, char* argv[])
             0.0f, // Tempo sendo visto
             0.0f, // t usado pela curva de bezier
             {
-                glm::vec3(pos.x, pos.y, pos.z),
-                glm::vec3(pos.x, pos.y + 5.0f, pos.z),
-                glm::vec3(-pos.x, pos.y + 5.0f, -pos.z),
-                glm::vec3(pos.x + 20.0f, pos.y - 0.05f, -pos.z)
+                glm::vec3(pos.x, pos.y + 0.57f, pos.z),
+                glm::vec3(6.88f, 10.0f, -5.37f),
+                glm::vec3(-2.45f, 1.0f, 9.71),
+                glm::vec3(7.31f, 0.1f, 1.52)
+            } // Pontos do caminho de fuga
+        };
+        Cubes_Collisions[Obj_Name].push_back(temp);
+    }
+
+    pos = glm::vec4(18.74f, 0.2f, -6.72f, 1.0f);
+    {
+        Cubo_Collision temp = {
+            {
+                bbox_min,
+                bbox_max
+            }, // Cube
+            false, // bool colide
+            Matrix_Translate(pos.x, pos.y, pos.z)
+          * Matrix_Scale(scale, scale, scale), // Matrix do Modelo
+            Obj_Name, // Nome do objeto na cena virtual
+            false, // Se o objeto está sendo observado
+            0.0f, // Tempo sendo visto
+            0.0f, // t usado pela curva de bezier
+            {
+                glm::vec3(pos.x, pos.y + 0.57f, pos.z),
+                glm::vec3(21.10f, 1.0f, -11.73f),
+                glm::vec3(11.73f, 5.0f, -10.43),
+                glm::vec3(4.73f, 0.1f, -10.54f)
+            } // Pontos do caminho de fuga
+        };
+        Cubes_Collisions[Obj_Name].push_back(temp);
+    }
+
+    pos = glm::vec4(-10.80f, 0.1f, 1.60f, 1.0f);
+    {
+        Cubo_Collision temp = {
+            {
+                bbox_min,
+                bbox_max
+            }, // Cube
+            false, // bool colide
+            Matrix_Translate(pos.x, pos.y, pos.z)
+          * Matrix_Scale(scale, scale, scale), // Matrix do Modelo
+            Obj_Name, // Nome do objeto na cena virtual
+            false, // Se o objeto está sendo observado
+            0.0f, // Tempo sendo visto
+            0.0f, // t usado pela curva de bezier
+            {
+                glm::vec3(pos.x, pos.y + 0.57f, pos.z),
+                glm::vec3(4.44f, 5.0f, 27.86f),
+                glm::vec3(28.08f, 10.0f, 4.86f),
+                glm::vec3(14.32f, 0.1f, 4.33f)
+            } // Pontos do caminho de fuga
+        };
+        Cubes_Collisions[Obj_Name].push_back(temp);
+    }
+
+    pos = glm::vec4(-12.71f, 0.1f, 19.09f, 1.0f);
+    {
+        Cubo_Collision temp = {
+            {
+                bbox_min,
+                bbox_max
+            }, // Cube
+            false, // bool colide
+            Matrix_Translate(pos.x, pos.y, pos.z)
+          * Matrix_Scale(scale, scale, scale), // Matrix do Modelo
+            Obj_Name, // Nome do objeto na cena virtual
+            false, // Se o objeto está sendo observado
+            0.0f, // Tempo sendo visto
+            0.0f, // t usado pela curva de bezier
+            {
+                glm::vec3(pos.x, pos.y + 0.57f, pos.z),
+                glm::vec3(-0.20f, 5.0f, 12.55f),
+                glm::vec3(-14.0f, 2.0f, 6.52f),
+                glm::vec3(-3.31f, 0.5f, 4.51f)
             } // Pontos do caminho de fuga
         };
         Cubes_Collisions[Obj_Name].push_back(temp);
@@ -556,9 +633,9 @@ int main(int argc, char* argv[])
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
+        // Calcula da Iluminação e da posição da câmera
         ray.dir = camera_view_vector;
         ray.origem = camera_position_c;
-        InputperFrame(window);
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -574,16 +651,21 @@ int main(int argc, char* argv[])
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+        InputperFrame(window);
+
         // Se todas as estátuas foram destruidas
         bool estatua_final = true;
-        for(unsigned int i = 0; i < Cubes_Collisions["statue"].size(); i++)
+        if(!Spheres_Collisions["sphere"][0].colide) estatua_final = false;
+        for(unsigned int i = 1; i < Cubes_Collisions["statue"].size(); i++)
         {
             if(!Cubes_Collisions["statue"][i].colide) estatua_final = false;
         }
 
+        Tfinal = Cubes_Collisions["statue"][0].colide;
+
         glm::mat4 view;
         glm::vec4 LightPos;
-        if(estatua_final && anim_final >= 0)
+        if((estatua_final && anim_final >= 0) || Tfinal)
         {
             anim_final += deltaTime;
             glm::vec4 newOrigem = glm::vec4(-50.0f, 0.0f, -50.0f, 1.0f);
@@ -597,11 +679,11 @@ int main(int argc, char* argv[])
             glUniform4f(light_pos_uniform, LightPos.x, LightPos.y, LightPos.z, 1.0f);
             glUniform4f(light_dir_uniform, LightDir.x, LightDir.y, LightDir.z, 0.0f);
 
-            if(anim_final >= 5) anim_final = -1.0f;
+            if((anim_final >= 5) && !Tfinal) anim_final = -1.0f;
 
         } else
         {
-            anim_model = Cubes_Collisions[Obj_Name][0].Matrix_Model;
+            anim_model = Cubes_Collisions["statue"][0].Matrix_Model;
             camera_view_vector = glm::normalize(direction);
             view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
 
@@ -613,14 +695,10 @@ int main(int argc, char* argv[])
             glUniform4f(light_dir_uniform, camera_view_vector.x, camera_view_vector.y, camera_view_vector.z, 0.0f);
         }
 
-
-        // Agora computamos a matriz de Projeção.
         glm::mat4 projection;
 
-        // Note que, no sistema de coordenadas da câmera, os planos near e far
-        // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.001f;  // Posição do "near plane"
-        float farplane  = -500.0f; // Posição do "far plane"
+        float farplane  = -200.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -636,14 +714,11 @@ int main(int argc, char* argv[])
             projection = Matrix_Orthographic(l, r, b, t, nearplane, farplane);
         }
 
-        glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
-
-        // Enviamos as matrizes "view" e "projection" para a placa de vídeo
-        // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
-        // efetivamente aplicadas em todos os pontos.
         glUniformMatrix4fv(view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
+        // Desenho dos Objetos
+        glm::mat4 model = Matrix_Identity();
         #define SPHERE 0
         #define BUNNY  1
         #define PLANE  2
@@ -677,22 +752,18 @@ int main(int argc, char* argv[])
                 } else if(acos(angle) < d2r(25))
                 {
                     modelo->tempoVisto += deltaTime;
-                    if(modelo->tempoVisto >= 2 && !modelo->visto)
+                    if(modelo->tempoVisto >= 5 && !modelo->visto)
                     {
                         modelo->visto = true;
                         modelo->tempoVisto = 0;
                     }
                 } else modelo->tempoVisto = 0;
 
-
-                if(Cubes_Collisions[Obj_Name][0].colide)
-                {
-                    glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(anim_model));
-                    glUniform1i(object_id_uniform, STATUEG);
-                    DrawVirtualObject(Obj_Name.c_str());
-                }
+                glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(anim_model));
+                glUniform1i(object_id_uniform, STATUEG);
+                DrawVirtualObject(Obj_Name.c_str());
         }
-        else for(unsigned int i = 0; i < Cubes_Collisions[Obj_Name].size(); i++)
+        else for(unsigned int i = 1; i < Cubes_Collisions[Obj_Name].size(); i++)
         {
             Cubo_Collision* modelo = &(Cubes_Collisions[Obj_Name][i]);
             centro = ((modelo->Matrix_Model * modelo->cube.vert_min) + (modelo->Matrix_Model * modelo->cube.vert_max)) * 0.5f;
@@ -713,7 +784,7 @@ int main(int argc, char* argv[])
             } else if(acos(angle) < d2r(25))
             {
                 modelo->tempoVisto += deltaTime;
-                if(modelo->tempoVisto >= 2 && !modelo->visto)
+                if(modelo->tempoVisto >= 5 && !modelo->visto)
                 {
                     modelo->visto = true;
                     modelo->tempoVisto = 0;
@@ -758,40 +829,38 @@ int main(int argc, char* argv[])
             }
         }
 
+        Obj_Name = "sphere";
+        Sphere_Collision* modelo = &(Spheres_Collisions[Obj_Name][0]);
+        if(!(Spheres_Collisions[Obj_Name][0].colide))
+        {
+            glUniform3f(Ka_uniform, modelo->Ka.x, modelo->Ka.y, modelo->Ka.z);
+            glUniform3f(Kd_uniform, modelo->Kd.x, modelo->Kd.y, modelo->Kd.z);
+            glUniform3f(Ks_uniform, modelo->Ks.x, modelo->Ks.y, modelo->Ks.z);
+            glUniform3f(Ke_uniform, modelo->Ke.x, modelo->Ke.y, modelo->Ke.z);
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(modelo->Matrix_Model));
+            glUniform1i(object_id_uniform, SPHERE);
+            DrawVirtualObject(Obj_Name.c_str());
+        }
+
         if(!estatua_final || anim_final == -1.0f)
         {
+            glDisable(GL_DEPTH_TEST);
             model = Matrix_Translate(0.23f,-1.0f,-2.0f) * Matrix_Scale(0.002f, 0.002f, 0.002f);
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(object_id_uniform, GUN);
             DrawVirtualObject("revolver");
+            glEnable(GL_DEPTH_TEST);
         }
 
-        glDrawElements(
-            g_VirtualScene["axes"].rendering_mode,
-            g_VirtualScene["axes"].num_indices,
-            GL_UNSIGNED_INT,
-            (void*)g_VirtualScene["axes"].first_index
-        );
-
-        // Imprimimos na tela informação sobre o número de quadros renderizados
-        // por segundo (frames per second).
         TextRendering_ShowFramesPerSecond(window);
 
-        // Imprimi a crosshair, a mira.
-        TextRendering_ShowCrossHair(window);
+        if(Tfinal)
+            TextRendering_Parabens(window);
+        else
+            TextRendering_ShowCrossHair(window);
 
-        // O framebuffer onde OpenGL executa as operações de renderização não
-        // é o mesmo que está sendo mostrado para o usuário, caso contrário
-        // seria possível ver artefatos conhecidos como "screen tearing". A
-        // chamada abaixo faz a troca dos buffers, mostrando para o usuário
-        // tudo que foi renderizado pelas funções acima.
-        // Veja o link: Veja o link: https://en.wikipedia.org/w/index.php?title=Multiple_buffering&oldid=793452829#Double_buffering_in_computer_graphics
         glfwSwapBuffers(window);
 
-        // Verificamos com o sistema operacional se houve alguma interação do
-        // usuário (teclado, mouse, ...). Caso positivo, as funções de callback
-        // definidas anteriormente usando glfwSet*Callback() serão chamadas
-        // pela biblioteca GLFW.
         glfwPollEvents();
     }
 
@@ -918,8 +987,6 @@ void LoadShadersFromFiles()
     vertex_shader_id = LoadShader_Vertex("../../src/shader_vertex.glsl");
     fragment_shader_id = LoadShader_Fragment("../../src/shader_fragment.glsl");
 
-    vertex_shader_shadow_id = LoadShader_Vertex("../../src/shader_vertex_shadow_map.glsl");
-    fragment_shader_shadow_id = LoadShader_Fragment("../../src/shader_fragment_shadow_map.glsl");
 
     // Deletamos o programa de GPU anterior, caso ele exista.
     if ( program_id != 0 )
@@ -927,7 +994,6 @@ void LoadShadersFromFiles()
 
     // Criamos um programa de GPU utilizando os shaders carregados acima.
     program_id = CreateGpuProgram(vertex_shader_id, fragment_shader_id);
-    program_shadow_id = CreateGpuProgram(vertex_shader_shadow_id, fragment_shader_shadow_id);
 
     // Buscamos o endereço das variáveis definidas dentro do Vertex Shader.
     // Utilizaremos estas variáveis para enviar dados para a placa de vídeo
@@ -1135,8 +1201,8 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel* model, bool env)
     glBindBuffer(GL_ARRAY_BUFFER, VBO_model_coefficients_id);
     glBufferData(GL_ARRAY_BUFFER, model_coefficients.size() * sizeof(float), NULL, GL_STATIC_DRAW);
     glBufferSubData(GL_ARRAY_BUFFER, 0, model_coefficients.size() * sizeof(float), model_coefficients.data());
-    GLuint location = 0; // "(location = 0)" em "shader_vertex.glsl"
-    GLint  number_of_dimensions = 4; // vec4 em "shader_vertex.glsl"
+    GLuint location = 0;
+    GLint  number_of_dimensions = 4;
     glVertexAttribPointer(location, number_of_dimensions, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(location);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -1342,6 +1408,7 @@ void FramebufferSizeCallback(GLFWwindow* window, int width, int height)
     // função "glViewport" define o mapeamento das "normalized device
     // coordinates" (NDC) para "pixel coordinates".  Essa é a operação de
     // "Screen Mapping" ou "Viewport Mapping" vista em aula ({+ViewportMapping2+}).
+
     glViewport(0, 0, width, height);
 
     // Atualizamos também a razão que define a proporção da janela (largura /
@@ -1359,16 +1426,20 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
-        for(auto& c: Cubes_Collisions)
-            for(auto& v: c.second)
-            {
-                if(v.objName != "statue") continue;
-                glm::vec4 bbMin = v.Matrix_Model * (glm::vec4(v.cube.vert_min.x, v.cube.vert_min.y, v.cube.vert_min.z, 1.0f));
-                glm::vec4 bbMax = v.Matrix_Model * (glm::vec4(v.cube.vert_max.x, v.cube.vert_max.y, v.cube.vert_max.z, 1.0f));
-                Cubo temp {bbMin, bbMax};
-                v.colide = (collision(ray, temp) || v.colide);
-            }
+            for(auto& c: Cubes_Collisions)
+                for(auto& v: c.second)
+                {
+                    if(v.objName != "statue") continue;
+                    glm::vec4 bbMin = v.Matrix_Model * (glm::vec4(v.cube.vert_min.x, v.cube.vert_min.y, v.cube.vert_min.z, 1.0f));
+                    glm::vec4 bbMax = v.Matrix_Model * (glm::vec4(v.cube.vert_max.x, v.cube.vert_max.y, v.cube.vert_max.z, 1.0f));
+                    Cubo temp {bbMin, bbMax};
+                    v.colide = (collision(ray, temp) || v.colide);
 
+                }
+
+            for(auto& s: Spheres_Collisions)
+                for(auto& v: s.second)
+                    v.colide = (collision(ray, v.bola) || v.colide);
     }
 }
 
@@ -1524,6 +1595,7 @@ void InputperFrame(GLFWwindow* window){
     for(auto& c: Cubes_Collisions)
         for(auto& v: c.second)
         {
+            if(v.objName != "statue") continue;
             glm::vec4 bbMin = v.Matrix_Model * (glm::vec4(v.cube.vert_min.x, v.cube.vert_min.y, v.cube.vert_min.z, 1.0f));
             glm::vec4 bbMax = v.Matrix_Model * (glm::vec4(v.cube.vert_max.x, v.cube.vert_max.y, v.cube.vert_max.z, 1.0f));
             Cubo temp {bbMin, bbMax};
@@ -1531,12 +1603,17 @@ void InputperFrame(GLFWwindow* window){
             NpodeMover = (collision(PlayerTemp, temp) || NpodeMover) && !v.colide;
         }*/
 
+    if(PlayerTemp.vert_max.x >= 20.0f)
+        NpodeMover = true;
+
+    if(PlayerTemp.vert_max.z >= 20.0f)
+        NpodeMover = true;
+
     for(Plano p: Planes_Collisions)
     {
         NpodeMover = collision(PlayerTemp, p) || NpodeMover;
     }
 
-    //!NpodeMover
     if(!NpodeMover)
     {
         camera_position_c = nextPos;
@@ -1644,6 +1721,16 @@ void TextRendering_ShowCrossHair(GLFWwindow* window)
     glfwGetWindowSize(window, &width, &height);
 
     TextRendering_PrintString(window, "+", 0.0f-(charwidth/2.0f), 0.0f-(lineheight/2), 1.0f);
+}
+
+void TextRendering_Parabens(GLFWwindow* window)
+{
+    float lineheight = TextRendering_LineHeight(window);
+    float charwidth = TextRendering_CharWidth(window);
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+
+    TextRendering_PrintString(window, "PARABENS", 0.0f-((8*charwidth)/2.0f), 0.0f-(lineheight/2), 1.0f);
 }
 
 // Escrevemos na tela o número de quadros renderizados por segundo (frames per

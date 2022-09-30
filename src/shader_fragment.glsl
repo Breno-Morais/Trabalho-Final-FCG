@@ -13,6 +13,8 @@ in vec4 position_model;
 // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
 in vec2 texcoords;
 
+in vec3 cor;
+
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
 uniform mat4 view;
@@ -204,6 +206,10 @@ void main()
 
     if(object_id == GUN)
         color.rgb = ambient_term + (Kd*I*lambert_diffuse_term*0.01f) + blinn_phong_specular_term*0.01f;
+    else if(object_id == SPHERE)
+    {
+        color.rgb = cor;
+    }
     else if(acos(angle) < radians(angFech))
     {
         if(object_id == STATUEI)
