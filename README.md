@@ -4,10 +4,12 @@ Desenvolvido por Breno Morais e Juan Arcari.
 
 X - Criar chão
 X - Movimentação da Câmera
-- Colocar objetos e texturas no espaço
-(Mais ou menos)- Colisão
-- Arma
+X - Colocar objetos e texturas no espaço
+X - Colisão
+X - Arma
 X - Iluminação
-- Cena
-- Texturas
-- Alvos E Tiros
+X - Cena
+X - Texturas
+X - Alvos E Tiros
+
+Finalizado!
