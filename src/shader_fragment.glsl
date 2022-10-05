@@ -58,16 +58,9 @@ out vec4 color;
 
 void main()
 {
-    // Obtemos a posição da câmera utilizando a inversa da matriz que define o
-    // sistema de coordenadas da câmera.
     vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
     vec4 camera_position = inverse(view) * origin;
 
-    // O fragmento atual é coberto por um ponto que percente à superfície de um
-    // dos objetos virtuais da cena. Este ponto, p, possui uma posição no
-    // sistema de coordenadas global (World coordinates). Esta posição é obtida
-    // através da interpolação, feita pelo rasterizador, da posição de cada
-    // vértice.
     vec4 p = position_world;
     vec4 pM = position_model;
 
@@ -119,27 +112,6 @@ void main()
         Ka = vec3(0.4,0.2,0.04);
         q = 20.0;
     }
-    else if ( object_id == BUNNY )
-    {
-        // Projeção de Textura
-        float minx = bbox_min.x;
-        float maxx = bbox_max.x;
-
-        float miny = bbox_min.y;
-        float maxy = bbox_max.y;
-
-        float minz = bbox_min.z;
-        float maxz = bbox_max.z;
-
-        U = (pM.x - minx)/(maxx - minx);
-        V = (pM.y - miny)/(maxy - miny);
-
-        // Propriedades espectrais do coelho
-        Kd = vec3(0.8,0.8,0.8);
-        Ks = vec3(0.8,0.8,0.8);
-        Ka = vec3(0.04,0.2,0.4);
-        q = 32.0;
-    }
     else if ( object_id == PLANE )
     {
         // Propriedades espectrais do plano
@@ -168,7 +140,7 @@ void main()
     }
     else if(object_id == 99)
     {
-        Ka = (MKa * 0.1f) + vec3(0.01f, 0.01f, 0.0f);
+        Ka = (MKa * 0.1f) + vec3(0.2f, 0.2f, 0.0f);
         Kd = (MKd * 0.1f) + vec3(0.01f, 0.01f, 0.0f);
         Ks = (MKs * 0.1f) + vec3(0.01f, 0.01f, 0.0f);
     }
@@ -226,10 +198,7 @@ void main()
             color.rgb = (texture(TextureImage1, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term)*0.01f;
         else color.rgb = ambient_term + (Kd*I*lambert_diffuse_term*0.01f);
     }
-    // 0.01f * (ambient_term + (Kd*Kd0) + texture(TextureImage1, vec2(U,V)).rgb);
 
-    // Cor final com correção gamma, considerando monitor sRGB.
-    // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
 }
 

@@ -5,16 +5,10 @@
 //    INF01047 Fundamentos de Computação Gráfica
 //               Prof. Eduardo Gastal
 //
-//                   LABORATÓRIO 5
+//                   Trabalho FInal
 //
 
-// Arquivos "headers" padrões de C podem ser incluídos em um
-// programa C++, sendo necessário somente adicionar o caractere
-// "c" antes de seu nome, e remover o sufixo ".h". Exemplo:
-//    #include <stdio.h> // Em C
-//  vira
-//    #include <cstdio> // Em C++
-//
+
 #include <cmath>
 #include <math.h>
 #include <cstdio>
@@ -51,16 +45,12 @@
 #include "matrices.h"
 #include "collisions.h"
 
-// Estrutura que representa um modelo geométrico carregado a partir de um
-// arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
 {
     tinyobj::attrib_t                 attrib;
     std::vector<tinyobj::shape_t>     shapes;
     std::vector<tinyobj::material_t>  materials;
 
-    // Este construtor lê o modelo de um arquivo utilizando a biblioteca tinyobjloader.
-    // Veja: https://github.com/syoyo/tinyobjloader
     ObjModel(const char* filename, const char* basepath = NULL, bool triangulate = true)
     {
         printf("Carregando modelo \"%s\"... ", filename);
@@ -79,12 +69,9 @@ struct ObjModel
 };
 
 
-// Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
 void PopMatrix(glm::mat4& M);
 
-// Declaração de várias funções utilizadas em main().  Essas estão definidas
-// logo após a definição de main() neste arquivo.
 void BuildTrianglesAndAddToVirtualScene(ObjModel* model, bool env = false); // Constrói representação de um ObjModel como malha de triângulos para renderização
 void ComputeNormals(ObjModel* model); // Computa normais de um ObjModel, caso não existam.
 void LoadShadersFromFiles(); // Carrega os shaders de vértice e fragmento, criando um programa de GPU
@@ -96,8 +83,6 @@ void LoadShader(const char* filename, GLuint shader_id); // Função utilizada p
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 void PrintObjModelInfo(ObjModel*); // Função para debugging
 
-// Declaração de funções auxiliares para renderizar texto dentro da janela
-// OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
 void TextRendering_Init();
 float TextRendering_LineHeight(GLFWwindow* window);
 float TextRendering_CharWidth(GLFWwindow* window);
@@ -110,15 +95,11 @@ void TextRendering_PrintMatrixVectorProductMoreDigits(GLFWwindow* window, glm::m
 void TextRendering_PrintMatrixVectorProductDivW(GLFWwindow* window, glm::mat4 M, glm::vec4 v, float x, float y, float scale = 1.0f);
 void TextRendering_ShowCrossHair(GLFWwindow* window);
 
-// Funções abaixo renderizam como texto na janela OpenGL algumas matrizes e
-// outras informações do programa. Definidas após main().
 void TextRendering_ShowModelViewProjection(GLFWwindow* window, glm::mat4 projection, glm::mat4 view, glm::mat4 model, glm::vec4 p_model);
 void TextRendering_ShowEulerAngles(GLFWwindow* window);
 void TextRendering_ShowProjection(GLFWwindow* window);
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
 
-// Funções callback para comunicação com o sistema operacional e interação do
-// usuário. Veja mais comentários nas definições das mesmas, abaixo.
 void FramebufferSizeCallback(GLFWwindow* window, int width, int height);
 void ErrorCallback(int error, const char* description);
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
@@ -127,8 +108,6 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 void InputperFrame(GLFWwindow* window);
 
-// Definimos uma estrutura que armazenará dados necessários para renderizar
-// cada objeto da cena virtual.
 struct SceneObject
 {
     std::string  name;        // Nome do objeto
@@ -140,12 +119,6 @@ struct SceneObject
     glm::vec3    bbox_max;
 };
 
-// Abaixo definimos variáveis globais utilizadas em várias funções do código.
-
-// A cena virtual é uma lista de objetos nomeados, guardados em um dicionário
-// (map).  Veja dentro da função BuildTrianglesAndAddToVirtualScene() como que são incluídos
-// objetos dentro da variável g_VirtualScene, e veja na função main() como
-// estes são acessados.
 std::map<std::string, SceneObject> g_VirtualScene;
 
 // Pilha que guardará as matrizes de modelagem.
@@ -159,8 +132,6 @@ float g_AngleX = 0.0f;
 float g_AngleY = 0.0f;
 float g_AngleZ = 0.0f;
 
-// "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
-// pressionado no momento atual. Veja função MouseButtonCallback().
 bool g_LeftMouseButtonPressed = false;
 bool g_RightMouseButtonPressed = false; // Análogo para botão direito do mouse
 bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mouse
@@ -172,10 +143,6 @@ glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
 glm::vec4 camera_pos_anim = glm::vec4(0.0f,1.0f,0.0f,1.0f);
 glm::vec4 camera_view_anim = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 
-// Variáveis que definem a câmera em coordenadas esféricas, controladas pelo
-// usuário através do mouse (veja função CursorPosCallback()). A posição
-// efetiva da câmera é calculada dentro da função main(), dentro do loop de
-// renderização.
 float g_CameraTheta = -6.25f; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 0.020796f;   // Ângulo em relação ao eixo Y
 float g_CameraDistance = 2.5f; // Distância da câmera para a origem
@@ -217,7 +184,6 @@ GLint Kd_uniform;
 GLint Ks_uniform;
 GLint Ke_uniform;
 
-// Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 
 glm::vec3 cubic_bezier(glm::vec3 p1, glm::vec3 p2, glm::vec3 p3, glm::vec3 p4, float t);
@@ -236,8 +202,6 @@ static double d2r(double d);
 
 int main(int argc, char* argv[])
 {
-    // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
-    // sistema operacional, onde poderemos renderizar com OpenGL.
     int success = glfwInit();
     if (!success)
     {
@@ -245,10 +209,8 @@ int main(int argc, char* argv[])
         std::exit(EXIT_FAILURE);
     }
 
-    // Definimos o callback para impressão de erros da GLFW no terminal
     glfwSetErrorCallback(ErrorCallback);
 
-    // Pedimos para utilizar OpenGL versão 3.3 (ou superior)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
@@ -256,12 +218,8 @@ int main(int argc, char* argv[])
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     #endif
 
-    // Pedimos para utilizar o perfil "core", isto é, utilizaremos somente as
-    // funções modernas de OpenGL.
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
-    // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
     int height = 750;
     int width = 1300;
@@ -273,28 +231,17 @@ int main(int argc, char* argv[])
         std::exit(EXIT_FAILURE);
     }
 
-    // Definimos a função de callback que será chamada sempre que o usuário
-    // pressionar alguma tecla do teclado ...
     glfwSetKeyCallback(window, KeyCallback);
-    // ... ou clicar os botões do mouse ...
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
-    // ... ou movimentar o cursor do mouse em cima da janela ...
     glfwSetCursorPosCallback(window, CursorPosCallback);
-    // ... ou rolar a "rodinha" do mouse.
     glfwSetScrollCallback(window, ScrollCallback);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
-    // Indicamos que as chamadas OpenGL deverão renderizar nesta janela
     glfwMakeContextCurrent(window);
 
-    // Carregamento de todas funções definidas por OpenGL 3.3, utilizando a
-    // biblioteca GLAD.
     gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
-    // Definimos a função de callback que será chamada sempre que a janela for
-    // redimensionada, por consequência alterando o tamanho do "framebuffer"
-    // (região de memória onde são armazenados os pixels da imagem).
     glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
     FramebufferSizeCallback(window, width, height); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
 
@@ -435,38 +382,6 @@ int main(int argc, char* argv[])
     }
 
 //-------------------------------------------------------------------
-    ObjModel cubemodel("../../data/cube.obj");
-    ComputeNormals(&cubemodel);
-    BuildTrianglesAndAddToVirtualScene(&cubemodel);
-    Obj_Name = "cube";
-    bbox_min = glm::vec4(g_VirtualScene[Obj_Name].bbox_min.x,
-                          g_VirtualScene[Obj_Name].bbox_min.y,
-                          g_VirtualScene[Obj_Name].bbox_min.z,
-                          1.0f);
-    bbox_max = glm::vec4(g_VirtualScene[Obj_Name].bbox_max.x,
-                          g_VirtualScene[Obj_Name].bbox_max.y,
-                          g_VirtualScene[Obj_Name].bbox_max.z,
-                          1.0f);
-    centro = (bbox_max + bbox_min)/2.0f;
-    float scalex = 1.0f;
-    float scaley = 1.0f;
-    float scalez = 1.0f;
-
-    {
-        Cubo_Collision temp = {
-            {
-                bbox_min,
-                bbox_max
-            }, // Cube
-            false, // bool colide
-            Matrix_Translate(pos.x, pos.y, pos.z)
-          * Matrix_Scale(scalex, scaley, scalez), // Matrix do Modelo
-            Obj_Name, // Nome do objeto na cena virtual
-        };
-        Cubes_Collisions[Obj_Name].push_back(temp);
-    }
-
-//-------------------------------------------------------------------
 
     ObjModel statuemodel("../../data/statue.obj","../../data/");
     ComputeNormals(&statuemodel);
@@ -485,7 +400,7 @@ int main(int argc, char* argv[])
     centro = (bbox_max + bbox_min)/2.0f;
 
     // GOLDEN
-    pos = glm::vec4(23.76f, 0.1f, 9.61f, 1.0f);
+    pos = glm::vec4(19.29f, 0.1f, 9.78f, 1.0f);
     scale = 0.01f;
     {
         Cubo_Collision temp = {
@@ -502,9 +417,9 @@ int main(int argc, char* argv[])
             0.0f, // t usado pela curva de bezier
             {
                 glm::vec3(pos.x, pos.y + 0.3f, pos.z),
-                glm::vec3(pos.x, pos.y + 5.0f, pos.z),
-                glm::vec3(-pos.x, pos.y + 5.0f, -pos.z),
-                glm::vec3(-6.64f, 0.1f, 24.5f)
+                glm::vec3(18.18f, 7.0f, -5.76f),
+                glm::vec3(-18.0f, 5.0f, -4.25f),
+                glm::vec3(-14.59f, 0.1f, 13.28f)
             }, // Pontos do caminho de fuga
         };
         Cubes_Collisions[Obj_Name].push_back(temp);
@@ -1440,6 +1355,8 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
             for(auto& s: Spheres_Collisions)
                 for(auto& v: s.second)
                     v.colide = (collision(ray, v.bola) || v.colide);
+
+            PrintVector(camera_position_c);
     }
 }
 
@@ -1591,17 +1508,6 @@ void InputperFrame(GLFWwindow* window){
     PlayerTemp.newCentro(nextPos);
 
     bool NpodeMover = false;
-    /*
-    for(auto& c: Cubes_Collisions)
-        for(auto& v: c.second)
-        {
-            if(v.objName != "statue") continue;
-            glm::vec4 bbMin = v.Matrix_Model * (glm::vec4(v.cube.vert_min.x, v.cube.vert_min.y, v.cube.vert_min.z, 1.0f));
-            glm::vec4 bbMax = v.Matrix_Model * (glm::vec4(v.cube.vert_max.x, v.cube.vert_max.y, v.cube.vert_max.z, 1.0f));
-            Cubo temp {bbMin, bbMax};
-
-            NpodeMover = (collision(PlayerTemp, temp) || NpodeMover) && !v.colide;
-        }*/
 
     if(PlayerTemp.vert_max.x >= 20.0f)
         NpodeMover = true;
