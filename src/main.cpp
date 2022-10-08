@@ -136,7 +136,7 @@ bool g_LeftMouseButtonPressed = false;
 bool g_RightMouseButtonPressed = false; // Análogo para botão direito do mouse
 bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mouse
 
-glm::vec4 camera_position_c = glm::vec4(-1.8f,3.0f,-2.45f,1.0f);
+glm::vec4 camera_position_c = glm::vec4(-1.8f,5.0f,-2.45f,1.0f);
 glm::vec4 camera_view_vector = glm::vec4(0.0f, 0.0f, 0.0f, 0.0f);
 glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f);
 
@@ -221,9 +221,14 @@ int main(int argc, char* argv[])
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow* window;
-    int height = 750;
-    int width = 1300;
-    window = glfwCreateWindow(width, height, "INF01047 - 335794 - Breno da Silva Morais", NULL, NULL);
+
+    // https://gamedev.stackexchange.com/questions/58547/how-to-set-to-fullscreen-in-glfw3
+    GLFWmonitor* MyMonitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(MyMonitor);
+    int height = mode->height;
+    int width = mode->width;
+
+    window = glfwCreateWindow(width, height, "INF01047 - 335794 - Breno da Silva Morais", MyMonitor, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -259,9 +264,9 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
-    LoadTextureImage("../../data/StoneColor.png"); // TextureImage0
-    LoadTextureImage("../../data/GoldColor.png"); // TextureImage1
-    LoadTextureImage("../../data/Grass.jpg"); // TextureImage2
+    LoadTextureImage("../data/StoneColor.png"); // TextureImage0
+    LoadTextureImage("../data/GoldColor.png"); // TextureImage1
+    LoadTextureImage("../data/Grass.jpg"); // TextureImage2
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     glm::vec4 pos, centro, bbox_min, bbox_max;
@@ -274,7 +279,7 @@ int main(int argc, char* argv[])
 //-------------------------------------------------------------------
 
     scale = 0.005f;
-    ObjModel spheremodel("../../data/snowglobe.obj","../../data/");
+    ObjModel spheremodel("../data/snowglobe.obj","../data/");
     ComputeNormals(&spheremodel);
     BuildTrianglesAndAddToVirtualScene(&spheremodel);
 
@@ -307,13 +312,9 @@ int main(int argc, char* argv[])
         Spheres_Collisions["sphere"].push_back(temp);
     }
 
-    ObjModel sphere1model("../../data/sphere.obj","../../data/");
-    ComputeNormals(&sphere1model);
-    BuildTrianglesAndAddToVirtualScene(&sphere1model);
-
 //-------------------------------------------------------------------
 
-    ObjModel planemodel("../../data/plane.obj");
+    ObjModel planemodel("../data/plane.obj");
     ComputeNormals(&planemodel);
     BuildTrianglesAndAddToVirtualScene(&planemodel);
 
@@ -336,7 +337,7 @@ int main(int argc, char* argv[])
     }
 
 //-------------------------------------------------------------------
-    ObjModel isomodel("../../data/iso_flat1piece.obj","../../data/");
+    ObjModel isomodel("../data/iso_flat1piece.obj","../data/");
     ComputeNormals(&isomodel);
     BuildTrianglesAndAddToVirtualScene(&isomodel, true);
 
@@ -383,7 +384,7 @@ int main(int argc, char* argv[])
 
 //-------------------------------------------------------------------
 
-    ObjModel statuemodel("../../data/statue.obj","../../data/");
+    ObjModel statuemodel("../data/statue.obj","../data/");
     ComputeNormals(&statuemodel);
     BuildTrianglesAndAddToVirtualScene(&statuemodel);
     Obj_Name = "statue";
@@ -524,7 +525,7 @@ int main(int argc, char* argv[])
 
 //-------------------------------------------------------------------
 
-    ObjModel revolvermodel("../../data/revolver.obj");
+    ObjModel revolvermodel("../data/revolver.obj");
     ComputeNormals(&revolvermodel);
     BuildTrianglesAndAddToVirtualScene(&revolvermodel);
 
@@ -899,8 +900,8 @@ void LoadShadersFromFiles()
     //       |
     //       o-- shader_fragment.glsl
     //
-    vertex_shader_id = LoadShader_Vertex("../../src/shader_vertex.glsl");
-    fragment_shader_id = LoadShader_Fragment("../../src/shader_fragment.glsl");
+    vertex_shader_id = LoadShader_Vertex("../src/shader_vertex.glsl");
+    fragment_shader_id = LoadShader_Fragment("../src/shader_fragment.glsl");
 
 
     // Deletamos o programa de GPU anterior, caso ele exista.
@@ -1355,8 +1356,6 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
             for(auto& s: Spheres_Collisions)
                 for(auto& v: s.second)
                     v.colide = (collision(ray, v.bola) || v.colide);
-
-            PrintVector(camera_position_c);
     }
 }
 
@@ -1469,8 +1468,8 @@ void ErrorCallback(int error, const char* description)
 }
 
 void InputperFrame(GLFWwindow* window){
-    const float cameraSpeed = 5.0f * deltaTime; // Usa o deltaTime para que a diferença de framerate não afete a velocidade
-    const glm::vec4 dir_vec = glm::vec4(camera_view_vector.x, 0.0f, camera_view_vector.z, 0.0f);
+    const float cameraSpeed = 5.2f * deltaTime; // Usa o deltaTime para que a diferença de framerate não afete a velocidade
+    const glm::vec4 dir_vec = glm::vec4(camera_view_vector.x, 0.0f, camera_view_vector.z, 0.0f)/norm(glm::vec4(camera_view_vector.x, 0.0f, camera_view_vector.z, 0.0f));
 
     double mouse_x, mouse_y;
 	glfwGetCursorPos(window, &mouse_x, &mouse_y);

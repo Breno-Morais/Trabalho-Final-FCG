@@ -115,8 +115,10 @@ void main()
     else if ( object_id == PLANE )
     {
         // Propriedades espectrais do plano
-        Kd = vec3(0.015,0.02,0.00);
-        Ks = vec3(0.2,0.2,0.0);
+        U = pM.x * 10;
+        V = pM.z * 10;
+        Kd = vec3(0.03,0.03,0.0);
+        Ks = vec3(0.0,0.0,0.0);
         Ka = vec3(0.2,0.2,0.2);
         q = 80.0;
     }
@@ -188,6 +190,8 @@ void main()
             color.rgb = texture(TextureImage0, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term;
         else if(object_id == STATUEG)
             color.rgb = texture(TextureImage1, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term;
+        else if(object_id == PLANE)
+            color.rgb = (texture(TextureImage2, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term)*0.1f;
         else color.rgb = Kd*I*(lambert_diffuse_term + 0.01) + ambient_term + blinn_phong_specular_term;
     }
     else
@@ -196,6 +200,8 @@ void main()
             color.rgb = (texture(TextureImage0, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term)*0.01f;
         else if(object_id == STATUEG)
             color.rgb = (texture(TextureImage1, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term)*0.01f;
+        else if(object_id == PLANE)
+            color.rgb = (texture(TextureImage2, vec2(U,V)).rgb*lambert_diffuse_term + ambient_term + blinn_phong_specular_term)*0.01f;
         else color.rgb = ambient_term + (Kd*I*lambert_diffuse_term*0.01f);
     }
 
